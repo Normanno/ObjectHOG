@@ -13,7 +13,6 @@ def gamma_correction(src, lambda_value, constant_value ):
 
     return dest
 
-
 if __name__ == "__main__":
     src_path = sys.argv[1]
     dest_path = sys.argv[2]
