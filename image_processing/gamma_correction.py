@@ -35,3 +35,4 @@ if __name__ == "__main__":
     destImg = gamma_correction(srcImg, lambda_value, constant_value)
 
     cv.imwrite(dest_path, destImg)
+
