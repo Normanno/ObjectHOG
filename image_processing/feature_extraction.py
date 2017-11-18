@@ -17,7 +17,7 @@ def calc_gradient(image):
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-    # PROBLEMA (?): così i valori di angle vanno da 0 a 360, non a 180 come dice nel paper
+    # PROBLEMA (?): cosi i valori di angle vanno da 0 a 360, non a 180 come dice nel paper
     # Normalizziamo a 180?
     # angle = np.uint32(angle)
     # print angle
