@@ -6,21 +6,30 @@ import os
 
 
 def calc_gradient(image):
-    gX = cv.Sobel(image, cv.CV_32F, 1,0, 1)
-    gY = cv.Sobel(image, cv.CV_32F, 0, 1, 1)
-    magnitude, angle = cv.cartToPolar(gX, gY, True)
+    gradientX = cv.Sobel(image, cv.CV_32F, 1, 0, ksize=1)
+    gradientY = cv.Sobel(image, cv.CV_32F, 0, 1, ksize=1)
+    magnitude, angle = cv.cartToPolar(gradientX, gradientY, angleInDegrees=True)
 
+    cv.imshow("X gradient", gradientX)
+    cv.imshow("Y gradient", gradientY)
     cv.imshow("Magnitude", magnitude)
     cv.imshow("Angle", angle)
-    cv.imshow("GX", gX)
-    cv.imshow("GY", gY)
     cv.waitKey(0)
     cv.destroyAllWindows()
+
+    # PROBLEMA (?): così i valori di angle vanno da 0 a 360, non a 180 come dice nel paper
+    # Normalizziamo a 180?
+    # angle = np.uint32(angle)
+    # print angle
 
     return magnitude, angle
 
 
 def calc_histogram(cell):
+    """
+    Cell dimensions: 8x8x1 (1 channel)
+    Info in every pixel: 8x8x2 (magnitude and angle)
+    """
     histogram = 0
     return histogram
 
