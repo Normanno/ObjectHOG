@@ -26,9 +26,13 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
     """
     Cell dimensions: 8x8x1 (1 channel)
     Info in every pixel: 8x8x2 (magnitude and angle)
-    Bins number: 12 (best results in paper for angles from 0 to 360)
+    Bins number: 9 (best results in paper for signed gradients)
+        OR
+    Bins number: 12 (best results in paper for unsigned gradients)
     """
-    bins_number = 12
+    bins_number = 9
+    if not unsigned:
+        bins_number = 12
     image_width = 64
     image_height = 128
     # histograms = np.matrix((image_height / 8), (image_width / 8))
