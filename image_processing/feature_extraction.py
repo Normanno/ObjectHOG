@@ -17,21 +17,36 @@ def calc_gradient(image):
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-    # PROBLEMA (?): cosi i valori di angle vanno da 0 a 360, non a 180 come dice nel paper
-    # Normalizziamo a 180?
-    # angle = np.uint32(angle)
-    # print angle
+    angle = np.uint32(angle)
 
     return magnitude, angle
 
 
-def calc_histogram(cell):
+def calc_histograms(image, magnitude, angle, unsigned=False):
     """
     Cell dimensions: 8x8x1 (1 channel)
     Info in every pixel: 8x8x2 (magnitude and angle)
+    Bins number: 12 (best results in paper for angles from 0 to 360)
     """
-    histogram = 0
-    return histogram
+    bins_number = 12
+    image_width = 64
+    image_height = 128
+    # histograms = np.matrix((image_height / 8), (image_width / 8))
+    histograms = 1
+    for i in range(0, 16):
+        for j in range(0, 8):
+            print "CELL: (" + str(i + 1) + ", " + str(j + 1) + ")"
+            histogram = np.array(bins_number)
+            for k in range(0, 8):
+                for l in range(0, 8):
+                    row = (i * 8) + k
+                    col = (j * 8) + l
+                    print str(row) + ", " + str(col)
+                    if angle[row][col] > 180:
+                        angle[row][col] = angle[row][col] - 180
+    print angle
+
+    return histograms
 
 
 def normalize_block(block):
@@ -50,17 +65,17 @@ if __name__ == "__main__":
     image = np.float32(image) / 255.0
 
     print "---[ Calculating magnitude and angle... ]---"
-    magnitude, orientation = calc_gradient(image)
-    print "---[ Magnitude and angle calculated ]---"
+    magnitude, angle = calc_gradient(image)
+    print "---[ Magnitude and angle calculated ]---\n"
 
     print "---[ Calculating cell histogram... ]---"
-    histogram = calc_histogram(image)
-    print "---[ Cell histogram calculated ]---"
+    histograms = calc_histograms(image, magnitude, angle)
+    print "---[ Cell histogram calculated ]---\n"
 
     print "---[ Normalizing block... ]---"
     block = normalize_block(image)
-    print "---[ Block normalized ]---"
+    print "---[ Block normalized ]---\n"
 
     print "---[ Building feature vector... ]---"
     feature_vector = build_feature_vector(image)
-    print "---[ Feature vector built ]---"
+    print "---[ Feature vector built ]---\n"
