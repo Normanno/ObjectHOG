@@ -31,13 +31,14 @@ bin_position_12 = {
     330: 11
 }
 
-def calc_gradient(image):
-    gradientX = cv.Sobel(image, cv.CV_32F, 1, 0, ksize=1)
-    gradientY = cv.Sobel(image, cv.CV_32F, 0, 1, ksize=1)
-    magnitude, angle = cv.cartToPolar(gradientX, gradientY, angleInDegrees=True)
 
-    cv.imshow("X gradient", gradientX)
-    cv.imshow("Y gradient", gradientY)
+def calc_gradient(image):
+    gradient_x = cv.Sobel(image, cv.CV_32F, 1, 0, ksize=1)
+    gradient_y = cv.Sobel(image, cv.CV_32F, 0, 1, ksize=1)
+    magnitude, angle = cv.cartToPolar(gradient_x, gradient_y, angleInDegrees=True)
+
+    cv.imshow("X gradient", gradient_x)
+    cv.imshow("Y gradient", gradient_y)
     cv.imshow("Magnitude", magnitude)
     cv.imshow("Angle", angle)
     cv.waitKey(0)
@@ -47,36 +48,37 @@ def calc_gradient(image):
 
     return magnitude, angle
 
-# TODO VECTORIZE THIS IN calc_histograms to have bins
+
+# TODO vectorize this in calc_histograms to have bins
 def bin_count(magnitude, angle, cell_dimension, start_point, bin_dimension, signed_angles):
-    '''
-    :param magnitude: 
-    :param angle: 
-    :param cell_dimension: 
+    """
+    :param magnitude:
+    :param angle:
+    :param cell_dimension:
     :param start_point: array with x,y of the first point of the top-left point of the cell
     :param bin_dimension: number of bins, 9 for signed angles, 12 for unsigned
     :param signed_angles: True if the angles are signed, False otherwise
     :return:
-    '''
+    """
+
     bins = np.zeros(shape=bin_dimension)
     for i in range(0, cell_dimension):
         for j in range(0, cell_dimension):
             point_angle = angle[ (start_point[0] +i), (start_point[1] +j)]
             point_magnitude = magnitude[(start_point[0]+i), (start_point[1] +j)]
-            #todo verify contributon with angles
+            # TODO verify contribution with angles -> Con 'verify' intendi controllare che il calcolo sia giusto?
             if not signed_angles:
                 index = (point_angle - (point_angle % 20)) % 160
-                #index = ((point_angle - (point_angle % 20)) / 20) % 16
+                # index = ((point_angle - (point_angle % 20)) / 20) % 16
                 position = bin_position_9[index]
                 if position != 160:
                     bins[position] += point_magnitude
                 else:
                     bins[0] += point_magnitude / 2
                     bins[position] += point_magnitude / 2
-
             else:
                 index = (point_angle - (point_angle % 30)) % 330
-                #index = ((point_angle - (point_angle % 30)) / 30) % 33
+                # index = ((point_angle - (point_angle % 30)) / 30) % 33
                 position = bin_position_12[index]
                 if position != 330:
                     bins[position] += point_magnitude
@@ -85,6 +87,7 @@ def bin_count(magnitude, angle, cell_dimension, start_point, bin_dimension, sign
                     bins[position] += point_magnitude / 2
 
     return bins
+
 
 def calc_histograms(image, magnitude, angle, unsigned=False):
     """
@@ -99,7 +102,7 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
     if not unsigned:
         bins_number = 12
     cell_dimension = 8
-    image_height, image_width, image_channels = image.shape
+    image_height, image_width = image.shape
     hist_width = image_width / cell_dimension
     hist_height = image_height / cell_dimension
     # creation fo a ndarray (full of zeros) in which the third dimension represents
@@ -108,15 +111,14 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
 
     for i in range(0, hist_height):
         for j in range(0, hist_width):
-            print "CELL: (" + str(i + 1) + ", " + str(j + 1) + ")"
+            # print "CELL: (" + str(i + 1) + ", " + str(j + 1) + ")"
             for k in range(0, cell_dimension):
                 for l in range(0, cell_dimension):
                     row = (i * cell_dimension) + k
                     col = (j * cell_dimension) + l
-                    print str(row) + ", " + str(col)
+                    # print str(row) + ", " + str(col)
                     if angle[row][col] > 180:
                         angle[row][col] = angle[row][col] - 180
-    print angle
 
     return histograms
 
