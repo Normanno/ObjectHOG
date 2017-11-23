@@ -124,6 +124,7 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
                     # print str(row) + ", " + str(col)
                     if angle[row][col] > 180:
                         angle[row][col] = angle[row][col] - 180
+                    histograms[i][j] = np.random.randint(100, size=(bins_number))
 
     # process_pool = mp.Pool(processes=mp.cpu_count()/2)
     # for i in range(0, hist_width):
@@ -148,7 +149,8 @@ def normalize_block(histograms):
     """
 
     # Get the size and the number of the histograms
-    histograms_number, histograms_length = histograms.shape
+    histogram_rows, histograms_columns, histograms_length = histograms.shape
+    histograms_number = histogram_rows * histograms_columns
     print "- Histogram number: " + str(histograms_number)
     print "- Histogram length: " + str(histograms_length)
 
@@ -158,12 +160,15 @@ def normalize_block(histograms):
     block = np.zeros(block_length)
 
     # Fill the block
-    histograms_count = 0
     index = 0
-    while index < block_length:
-        block[index:index + histograms_length] = histograms[histograms_count][:]
-        index = index + histograms_length
-        histograms_count = histograms_count + 1
+    for i in range(0, histogram_rows):
+        for j in range(0, histograms_columns):
+            block[index:index + histograms_length] = histograms[i][j][:]
+            index = index + histograms_length
+
+    # Show the block
+    # print "- Block: "
+    # print block
 
     # Normalize the block
         # Calculate the L2 norm
@@ -236,15 +241,12 @@ if __name__ == "__main__":
 
     # Normalize blocks
     normalized_blocks = np.zeros([blocks_number, blocks_length])
+    blocks_count = 0
     for i in range(0, histograms_rows - 1):
         for j in range(0, histograms_columns - 1):
-            print "Block #" + str(i + j)
-            block_histograms = np.zeros([histograms_per_block, histograms_length])
-            block_histograms[0][:] = histograms[i][j][:]
-            block_histograms[1][:] = histograms[i][j + 1][:]
-            block_histograms[2][:] = histograms[i + 1][j][:]
-            block_histograms[3][:] = histograms[i + 1][j + 1][:]
-            normalized_blocks[i + j][:] = normalize_block(block_histograms)
+            print "Block #" + str(blocks_count + 1)
+            normalized_blocks[blocks_count][:] = normalize_block(histograms[i:i + 2, j:j + 2])
+            blocks_count = blocks_count + 1
             print ""
     print "---[ Blocks normalized ]---\n"
 
