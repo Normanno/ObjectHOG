@@ -64,27 +64,31 @@ def bin_count(magnitude, angle, cell_dimension, start_point, bin_dimension, sign
     bins = np.zeros(shape=bin_dimension)
     for i in range(0, cell_dimension):
         for j in range(0, cell_dimension):
-            point_angle = angle[ (start_point[0] +i), (start_point[1] +j)]
-            point_magnitude = magnitude[(start_point[0]+i), (start_point[1] +j)]
-            # TODO verify contribution with angles -> Con 'verify' intendi controllare che il calcolo sia giusto?
+            point_angle = angle[(start_point[0] + i), (start_point[1] + j)]
+            point_magnitude = magnitude[(start_point[0] + i), (start_point[1] + j)]
+            # TODO verify contribution with angles -> Con 'verify' intendi controllare che il calcolo sia giusto? -> esatto!
+            # DONE
+            bin_step = 30
+            bin_max = 360
             if not signed_angles:
-                index = (point_angle - (point_angle % 20)) % 160
-                # index = ((point_angle - (point_angle % 20)) / 20) % 16
+                bin_step = 20
+                bin_max = 180
+            # contribution is the percentage of contribution to the first bin after the one located by position
+            contribution = ((point_angle % bin_step) * (100/bin_step)) / 100
+            index = (point_angle - (point_angle % bin_step)) % bin_max
+
+            if not signed_angles:
                 position = bin_position_9[index]
-                if position != 160:
-                    bins[position] += point_magnitude
-                else:
-                    bins[0] += point_magnitude / 2
-                    bins[position] += point_magnitude / 2
+                position_next = bin_position_9[(index + bin_step) % bin_max]
             else:
-                index = (point_angle - (point_angle % 30)) % 330
-                # index = ((point_angle - (point_angle % 30)) / 30) % 33
                 position = bin_position_12[index]
-                if position != 330:
-                    bins[position] += point_magnitude
-                else:
-                    bins[0] += point_magnitude / 2
-                    bins[position] += point_magnitude / 2
+                position_next = bin_position_12[(index + bin_step) % bin_max]
+
+            if contribution == 0.0:
+                bins[position] += point_magnitude
+            else:
+                bins[position] += point_magnitude * (1 - contribution)
+                bins[position_next] += point_magnitude * contribution
 
     return bins
 
