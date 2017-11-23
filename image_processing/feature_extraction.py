@@ -230,26 +230,28 @@ if __name__ == "__main__":
     histograms = calc_histograms(image, magnitude, angle, True)
     print "---[ Cell histogram calculated ]---\n"
 
-    print "---[ Normalizing blocks... ]---"
     histograms_rows, histograms_columns, histograms_length = histograms.shape
     histograms_number = histograms_rows * histograms_columns
     histograms_per_block = 4
+    histograms_per_block_sqrt = np.int_(np.sqrt(histograms_per_block))
 
-    # Calculate blocks number and length
-    blocks_number = (histograms_rows - 1) * (histograms_columns - 1)
-    blocks_length = histograms_length * histograms_per_block
+    if histograms_per_block_sqrt <= histograms_rows and histograms_per_block_sqrt <= histograms_columns:
+        print "---[ Normalizing blocks... ]---"
+        # Calculate blocks number and length
+        blocks_number = (histograms_rows - histograms_per_block_sqrt + 1) * (histograms_columns - histograms_per_block_sqrt + 1)
+        blocks_length = histograms_length * histograms_per_block
 
-    # Normalize blocks
-    normalized_blocks = np.zeros([blocks_number, blocks_length])
-    blocks_count = 0
-    for i in range(0, histograms_rows - 1):
-        for j in range(0, histograms_columns - 1):
-            print "Block #" + str(blocks_count + 1)
-            normalized_blocks[blocks_count][:] = normalize_block(histograms[i:i + (histograms_per_block / 2), j:j + (histograms_per_block / 2)])
-            blocks_count = blocks_count + 1
-            print ""
-    print "---[ Blocks normalized ]---\n"
+        # Normalize blocks
+        normalized_blocks = np.zeros([blocks_number, blocks_length])
+        blocks_count = 0
+        for i in range(0, histograms_rows - histograms_per_block_sqrt + 1):
+            for j in range(0, histograms_columns - histograms_per_block_sqrt + 1):
+                print "Block #" + str(blocks_count + 1)
+                normalized_blocks[blocks_count][:] = normalize_block(histograms[i:i + histograms_per_block_sqrt, j:j + histograms_per_block_sqrt])
+                blocks_count = blocks_count + 1
+                print ""
+        print "---[ Blocks normalized ]---\n"
 
-    print "---[ Building feature vector... ]---"
-    feature_vector = build_feature_vector(normalized_blocks)
-    print "---[ Feature vector built ]---\n"
+        print "---[ Building feature vector... ]---"
+        feature_vector = build_feature_vector(normalized_blocks)
+        print "---[ Feature vector built ]---\n"
