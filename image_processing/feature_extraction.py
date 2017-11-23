@@ -129,6 +129,7 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
 
 def normalize_block(histograms):
     """
+    Normalize the blocks of cells
     :param histograms: a np.matrix containing the histograms of the cells that will form the block
     :return: block
     """
@@ -138,7 +139,7 @@ def normalize_block(histograms):
     print "- Histogram number: " + str(histograms_number)
     print "- Histogram length: " + str(histograms_length)
 
-    # Calculate the size of the block to return and initialize the block
+    # Calculate the size of the block to return and initialize it
     block_length = histograms_length * histograms_number
     print "- Block length: " + str(block_length)
     block = np.zeros(block_length)
@@ -166,8 +167,35 @@ def normalize_block(histograms):
     return normalized_block
 
 
-def build_feature_vector(image):
-    feature_vector = 0
+def build_feature_vector(normalized_blocks):
+    """
+    Build the HOG feature vector
+    :param normalized_blocks: a matrix containing all the normalized blocks
+    :return: feature_vector
+    """
+
+    # Get the size and the number of the normalized blocks
+    blocks_number, blocks_length = normalized_blocks.shape
+    print "- Blocks number: " + str(blocks_number)
+    print "- Blocks length: " + str(blocks_length)
+
+    # Calculate the size of the feature vector to return and initialize it
+    feature_vector_length = blocks_length * blocks_number
+    print "- Feature vector length: " + str(feature_vector_length)
+    feature_vector = np.zeros(feature_vector_length)
+
+    # Fill the feature vector
+    blocks_count = 0
+    index = 0
+    while index < feature_vector_length:
+        feature_vector[index:index + blocks_length] = normalized_blocks[blocks_count][:]
+        index = index + blocks_length
+        blocks_count = blocks_count + 1
+
+    # Show the feature vector
+    # print "- HOG feature vector: "
+    # print feature_vector
+
     return feature_vector
 
 
@@ -181,13 +209,31 @@ if __name__ == "__main__":
     print "---[ Magnitude and angle calculated ]---\n"
 
     print "---[ Calculating cell histogram... ]---"
-    histograms = calc_histograms(image, magnitude, angle)
+    histograms = calc_histograms(image, magnitude, angle, True)
     print "---[ Cell histogram calculated ]---\n"
 
-    print "---[ Normalizing block... ]---"
-    block = normalize_block(image[0:2, 0:16])
-    print "---[ Block normalized ]---\n"
+    print "---[ Normalizing blocks... ]---"
+    histograms_rows, histograms_columns, histograms_length = histograms.shape
+    histograms_number = histograms_rows * histograms_columns
+    histograms_per_block = 4
+
+    # Calculate blocks number and length
+    blocks_number = (histograms_rows - 1) * (histograms_columns - 1)
+    blocks_length = histograms_length * histograms_per_block
+    histos = np.zeros([histograms_per_block, histograms_length])
+    histos[0] = histograms[0][0][:]
+    histos[1] = histograms[1][0][:]
+    histos[2] = histograms[2][0][:]
+    histos[3] = histograms[3][0][:]
+
+    # Normalize blocks
+    normalized_blocks = np.zeros([blocks_number, blocks_length])
+    for i in range(0, blocks_number):
+        print "Block #" + str(i)
+        normalized_blocks[i][:] = normalize_block(histos)
+        print ""
+    print "---[ Blocks normalized ]---\n"
 
     print "---[ Building feature vector... ]---"
-    feature_vector = build_feature_vector(image)
+    feature_vector = build_feature_vector(normalized_blocks)
     print "---[ Feature vector built ]---\n"
