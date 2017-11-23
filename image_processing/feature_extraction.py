@@ -153,15 +153,11 @@ def normalize_block(histograms):
 
     # Normalize the block
         # Calculate the L2 norm
-    l2_norm = 0
-    for i in range(0, block_length):
-        l2_norm = l2_norm + np.square(block[i])
-    l2_norm = np.sqrt(l2_norm)
+    square_block = [np.square(x) for x in block]
+    l2_norm = np.sqrt(np.sum(square_block))
     print "- L2 norm: " + str(l2_norm)
         # Normalize the block by dividing every element by the norm
-    normalized_block = np.zeros(block_length)
-    for i in range(0, block_length):
-        normalized_block[i] = np.divide(block[i], l2_norm)
+    normalized_block = [x / l2_norm for x in block]
 
     # Show the normalized block
     # print "- Normalized block: "
