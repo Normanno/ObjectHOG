@@ -66,7 +66,7 @@ def bin_count(magnitude, angle, cell_dimension, start_point, bin_dimension, sign
         for j in range(0, cell_dimension):
             point_angle = angle[(start_point[0] + i), (start_point[1] + j)]
             point_magnitude = magnitude[(start_point[0] + i), (start_point[1] + j)]
-            # TODO verify contribution with angles -> Con 'verify' intendi controllare che il calcolo sia giusto? -> esatto!
+            # TODO verify contribution with angles
             # DONE
             bin_step = 30
             bin_max = 360
@@ -127,9 +127,47 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
     return histograms
 
 
-def normalize_block(block):
-    block = 0
-    return block
+def normalize_block(histograms):
+    """
+    :param histograms: a np.matrix containing the histograms of the cells that will form the block
+    :return: block
+    """
+
+    # Get the size and the number of the histograms
+    histograms_number, histograms_length = histograms.shape
+    print "- Histogram number: " + str(histograms_number)
+    print "- Histogram length: " + str(histograms_length)
+
+    # Calculate the size of the block to return and initialize the block
+    block_length = histograms_length * histograms_number
+    print "- Block length: " + str(block_length)
+    block = np.zeros(block_length)
+
+    # Fill the block
+    histograms_count = 0
+    index = 0
+    while index < block_length:
+        block[index:index + histograms_length] = histograms[histograms_count][:]
+        index = index + histograms_length
+        histograms_count = histograms_count + 1
+
+    # Normalize the block
+        # Calculate the L2 norm
+    l2_norm = 0
+    for i in range(0, block_length):
+        l2_norm = l2_norm + np.square(block[i])
+    l2_norm = np.sqrt(l2_norm)
+    print "- L2 norm: " + str(l2_norm)
+        # Normalize the block by dividing every element by the norm
+    normalized_block = np.zeros(block_length)
+    for i in range(0, block_length):
+        normalized_block[i] = np.divide(block[i], l2_norm)
+
+    # Show the normalized block
+    # print "- Normalized block: "
+    # print normalized_block
+
+    return normalized_block
 
 
 def build_feature_vector(image):
@@ -151,7 +189,7 @@ if __name__ == "__main__":
     print "---[ Cell histogram calculated ]---\n"
 
     print "---[ Normalizing block... ]---"
-    block = normalize_block(image)
+    block = normalize_block(image[0:2, 0:16])
     print "---[ Block normalized ]---\n"
 
     print "---[ Building feature vector... ]---"
