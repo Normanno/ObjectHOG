@@ -108,14 +108,14 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
         bins_number = 12
     cell_dimension = 8
     image_height, image_width = image.shape
-    hist_width = image_width / cell_dimension
-    hist_height = image_height / cell_dimension
+    hist_rows = image_height / cell_dimension
+    hist_columns = image_width / cell_dimension
     # creation fo a ndarray (full of zeros) in which the third dimension represents
     # the bins for the cell located by first two
-    histograms = np.zeros(shape=(hist_width, hist_height, bins_number))
+    histograms = np.zeros([hist_rows, hist_columns, bins_number])
 
-    for i in range(0, hist_height):
-        for j in range(0, hist_width):
+    for i in range(0, hist_rows):
+        for j in range(0, hist_columns):
             # print "CELL: (" + str(i + 1) + ", " + str(j + 1) + ")"
             for k in range(0, cell_dimension):
                 for l in range(0, cell_dimension):
@@ -125,17 +125,17 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
                     if angle[row][col] > 180:
                         angle[row][col] = angle[row][col] - 180
 
-    process_pool = mp.Pool(processes=mp.cpu_count()/2)
-    for i in range(0, hist_width):
-        for j in range(0, hist_height):
-            res = process_pool.imap(ft.partial(bin_count, magnitude, angle, histograms[i, j], [i, j],
-                                         cell_dimension, not unsigned), range(hist_width * hist_height))
-            print str(res.get())
-    async_pool = mp.Pool(processes=mp.cpu_count()/2)
-    m_res = []
-
-    #process_pool.close()
-    #process_pool.join()
+    # process_pool = mp.Pool(processes=mp.cpu_count()/2)
+    # for i in range(0, hist_width):
+    #     for j in range(0, hist_height):
+    #         res = process_pool.imap(ft.partial(bin_count, magnitude, angle, histograms[i, j], [i, j],
+    #                                      cell_dimension, not unsigned), range(hist_width * hist_height))
+    #         print str(res.get())
+    # async_pool = mp.Pool(processes=mp.cpu_count()/2)
+    # m_res = []
+    #
+    # #process_pool.close()
+    # #process_pool.join()
 
     return histograms
 
@@ -233,18 +233,19 @@ if __name__ == "__main__":
     # Calculate blocks number and length
     blocks_number = (histograms_rows - 1) * (histograms_columns - 1)
     blocks_length = histograms_length * histograms_per_block
-    histos = np.zeros([histograms_per_block, histograms_length])
-    histos[0] = histograms[0][0][:]
-    histos[1] = histograms[1][0][:]
-    histos[2] = histograms[2][0][:]
-    histos[3] = histograms[3][0][:]
 
     # Normalize blocks
     normalized_blocks = np.zeros([blocks_number, blocks_length])
-    for i in range(0, blocks_number):
-        print "Block #" + str(i)
-        normalized_blocks[i][:] = normalize_block(histos)
-        print ""
+    for i in range(0, histograms_rows - 1):
+        for j in range(0, histograms_columns - 1):
+            print "Block #" + str(i + j)
+            block_histograms = np.zeros([histograms_per_block, histograms_length])
+            block_histograms[0][:] = histograms[i][j][:]
+            block_histograms[1][:] = histograms[i][j + 1][:]
+            block_histograms[2][:] = histograms[i + 1][j][:]
+            block_histograms[3][:] = histograms[i + 1][j + 1][:]
+            normalized_blocks[i + j][:] = normalize_block(block_histograms)
+            print ""
     print "---[ Blocks normalized ]---\n"
 
     print "---[ Building feature vector... ]---"
