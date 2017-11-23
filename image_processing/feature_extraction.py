@@ -245,7 +245,7 @@ if __name__ == "__main__":
     for i in range(0, histograms_rows - 1):
         for j in range(0, histograms_columns - 1):
             print "Block #" + str(blocks_count + 1)
-            normalized_blocks[blocks_count][:] = normalize_block(histograms[i:i + 2, j:j + 2])
+            normalized_blocks[blocks_count][:] = normalize_block(histograms[i:i + (histograms_per_block / 2), j:j + (histograms_per_block / 2)])
             blocks_count = blocks_count + 1
             print ""
     print "---[ Blocks normalized ]---\n"
