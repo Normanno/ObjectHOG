@@ -2,9 +2,7 @@ import cv2 as cv
 import numpy as np
 import multiprocessing as mp
 import functools as ft
-from matplotlib import pyplot as plt
-import sys
-import os
+import time
 
 bin_position_9 = {
     0: 0,
@@ -103,6 +101,7 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
         OR
     Bins number: 12 (best results in paper for unsigned gradients)
     """
+    start_time = time.time()
     bins_number = 9
     if not unsigned:
         bins_number = 12
@@ -131,5 +130,7 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
                                      callback=histograms.sum_bins_single)
     process_pool.close()
     process_pool.join()
+    elapsed = time.time() - start_time
+    print "*********milliseconds elapsed "+str(elapsed)
     return histograms.get_histograms()
 

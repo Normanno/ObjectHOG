@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import sys
 import os
 from histrograms_calculation import calc_histograms
+from block_normalization import normalize_blocks
 
 def calc_gradient(image):
     gradient_x = cv.Sobel(image, cv.CV_32F, 1, 0, ksize=1)
@@ -22,50 +23,6 @@ def calc_gradient(image):
     angle = np.uint32(angle)
 
     return magnitude, angle
-
-def normalize_block(histograms):
-    """
-    Normalize the blocks of cells
-    :param histograms: a np.matrix containing the histograms of the cells that will form the block
-    :return: block
-    """
-
-    # Get the size and the number of the histograms
-    histogram_rows, histograms_columns, histograms_length = histograms.shape
-    histograms_number = histogram_rows * histograms_columns
-    print "- Histogram number: " + str(histograms_number)
-    print "- Histogram length: " + str(histograms_length)
-
-    # Calculate the size of the block to return and initialize it
-    block_length = histograms_length * histograms_number
-    print "- Block length: " + str(block_length)
-    block = np.zeros(block_length)
-
-    # Fill the block
-    index = 0
-    for i in range(0, histogram_rows):
-        for j in range(0, histograms_columns):
-            block[index:index + histograms_length] = histograms[i][j][:]
-            index = index + histograms_length
-
-    # Show the block
-    # print "- Block: "
-    # print block
-
-    # Normalize the block
-        # Calculate the L2 norm
-    square_block = [np.square(x) for x in block]
-    l2_norm = np.sqrt(np.sum(square_block))
-    print "- L2 norm: " + str(l2_norm)
-        # Normalize the block by dividing every element by the norm
-    normalized_block = [x / l2_norm for x in block]
-
-    # Show the normalized block
-    # print "- Normalized block: "
-    # print normalized_block
-
-    return normalized_block
-
 
 def build_feature_vector(normalized_blocks):
     """
@@ -98,7 +55,6 @@ def build_feature_vector(normalized_blocks):
 
     return feature_vector
 
-
 if __name__ == "__main__":
     inImage = sys.argv[1]
     image = cv.imread(inImage, 0)
@@ -112,7 +68,7 @@ if __name__ == "__main__":
     histograms = calc_histograms(image, magnitude, angle, True)
     print "---[ Cell histogram calculated ]---\n"
 
-    print "---[ Normalizing blocks... ]---"
+    '''
     histograms_rows, histograms_columns, histograms_length = histograms.shape
     histograms_number = histograms_rows * histograms_columns
     histograms_per_block = 4
@@ -134,7 +90,11 @@ if __name__ == "__main__":
                 blocks_count = blocks_count + 1
                 print ""
         print "---[ Blocks normalized ]---\n"
+    '''
+    normalized_blocks = normalize_blocks(histograms)
+    if normalized_blocks is not None:
 
         print "---[ Building feature vector... ]---"
         feature_vector = build_feature_vector(normalized_blocks)
         print "---[ Feature vector built ]---\n"
+
