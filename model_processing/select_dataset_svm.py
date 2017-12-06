@@ -6,6 +6,14 @@ from xml.dom import minidom
 
 
 def parseAnnotation(annotation_file, classes_list):
+    """
+    > parseAnnotation(annotation_file, classes_list)
+    Parses the input annotation to search for the objects that have to be recognized
+
+    :param annotation_file: the annotation to be parsed
+    :param classes_list: the list containing the objects to be recognized
+    :return: a boolean value indicating if the annotation contains one of the objects or not
+    """
     xmldoc = minidom.parse(annotation_file)
     root = xmldoc.getElementsByTagName('annotation')
     # annotation = {'filename': "NULL", 'folder': "NULL", 'objectscount': 0, 'objects': []}
@@ -59,11 +67,11 @@ def createFilesList(directory):
     :return: a list of files that are physically associated with an image
     """
     files = []
-    for dir in listdir(directory + "/images/"):
-        for image in listdir(directory + "/images/" + dir):
+    for subdir in listdir(directory + "/images/"):
+        for image in listdir(directory + "/images/" + subdir):
             name = splitext(image)[0]
-            if exists(directory + "/annotations/" + dir + "/" + name + ".xml"):
-                files.append(directory + "/annotations/" + dir + "/" + name + ".xml")
+            if exists(directory + "/annotations/" + subdir + "/" + name + ".xml"):
+                files.append(directory + "/annotations/" + subdir + "/" + name + ".xml")
     return files
 
 
