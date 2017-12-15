@@ -1,12 +1,9 @@
 import cv2 as cv
 import numpy as np
-import multiprocessing as mp
-import functools as ft
-from matplotlib import pyplot as plt
 import sys
-import os
 from histrograms_calculation import calc_histograms
 from block_normalization import normalize_blocks
+
 
 def calc_gradient(image):
     gradient_x = cv.Sobel(image, cv.CV_32F, 1, 0, ksize=1)
@@ -23,6 +20,7 @@ def calc_gradient(image):
     angle = np.uint32(angle)
 
     return magnitude, angle
+
 
 def build_feature_vector(normalized_blocks):
     """
@@ -54,6 +52,7 @@ def build_feature_vector(normalized_blocks):
     # print feature_vector
 
     return feature_vector
+
 
 if __name__ == "__main__":
     inImage = sys.argv[1]
