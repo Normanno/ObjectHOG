@@ -47,7 +47,6 @@ def get_minimum_bounding_box(pts_list, square=False):
     """
     tl_x = None
     tl_y = None
-
     br_x = None
     br_y = None
 
