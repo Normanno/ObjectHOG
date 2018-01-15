@@ -1,9 +1,9 @@
 import cv2 as cv
 import numpy as np
 import sys
+from divide_image import resize_image
 from histrograms_calculation import calc_histograms
 from block_normalization import normalize_blocks
-
 
 def calc_gradient(image):
     gradient_x = cv.Sobel(image, cv.CV_32F, 1, 0, ksize=1)
@@ -78,12 +78,14 @@ if __name__ == "__main__":
     image = cv.imread(inImage, 0)
     image = np.float32(image) / 255.0
 
+    resized_image = resize_image(image)
+
     print "---[ Calculating magnitude and angle... ]---"
-    magnitude, angle = calc_gradient(image)
+    magnitude, angle = calc_gradient(resized_image)
     print "---[ Magnitude and angle calculated ]---\n"
 
     print "---[ Calculating cell histogram... ]---"
-    histograms = calc_histograms(image, magnitude, angle, True)
+    histograms = calc_histograms(resized_image, magnitude, angle, True)
     print "---[ Cell histogram calculated ]---\n"
 
     '''
