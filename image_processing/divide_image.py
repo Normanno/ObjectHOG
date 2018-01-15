@@ -21,11 +21,11 @@ def calc_new_shape(height, width):
     return new_height, new_width
 
 
-def resize_image(image):
+def resize_image(image, model_width=64, model_height=128):
     height, width = image.shape
     new_height, new_width = calc_new_shape(height, width)
-    resized_image = cv.resize(image, (new_width, new_height), interpolation = cv.INTER_NEAREST)
-    final_image = cv.copyMakeBorder(resized_image, 0, 128 - new_height, 0, 64 - new_width, cv.BORDER_CONSTANT)
+    resized_image = cv.resize(image, (new_width, new_height), interpolation=cv.INTER_NEAREST)
+    final_image = cv.copyMakeBorder(resized_image, 0, model_height - new_height, 0, model_width - new_width, cv.BORDER_CONSTANT)
 
     return final_image
 
