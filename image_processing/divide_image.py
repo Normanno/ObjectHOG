@@ -5,16 +5,16 @@ from histrograms_calculation import calc_histograms
 from block_normalization import normalize_blocks
 
 
-def calc_new_shape(height, width):
+def calc_new_shape(height, width, model_width=64, model_height=128):
     print "Height: " + str(height)
     print "Width: " + str(width)
 
-    new_height = 128
+    new_height = model_height
     new_width = (new_height * width) / height
 
-    if new_width > 64:
-        new_height = (64 * new_height) / new_width
-        new_width = 64
+    if new_width > model_width:
+        new_height = (model_width * new_height) / new_width
+        new_width = model_width
 
     print "New height: " + str(new_height)
     print "New width: " + str(new_width)
@@ -23,8 +23,8 @@ def calc_new_shape(height, width):
 
 def resize_image(image, model_width=64, model_height=128):
     height, width = image.shape
-    new_height, new_width = calc_new_shape(height, width)
-    resized_image = cv.resize(image, (new_width, new_height), interpolation=cv.INTER_NEAREST)
+    new_height, new_width = calc_new_shape(height, width, model_width, model_height)
+    resized_image = cv.resize(image, (new_width, new_height))
     final_image = cv.copyMakeBorder(resized_image, 0, model_height - new_height, 0, model_width - new_width, cv.BORDER_CONSTANT)
 
     return final_image
