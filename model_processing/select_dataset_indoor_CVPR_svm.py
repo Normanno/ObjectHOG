@@ -211,7 +211,7 @@ if __name__ == '__main__':
         print '(1) src directory, root of the dataset)'
         print '(2) conf directory, where to put lists of files for positive-ts,' \
               'negative-ts, test-set, validation-set'
-        print '(3) classes file, list of object ot classify'
+        print '(3) classes file, list of object to classify'
         exit(1)
 
     src_dir = sys.argv[1]

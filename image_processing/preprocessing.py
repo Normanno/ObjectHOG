@@ -19,6 +19,7 @@ def automatic_gamma_correction(src):
 
     return np.power(src, 1/gamma)
 
+
 if __name__ == "__main__":
     src_path = sys.argv[1]
     dest_path = sys.argv[2]

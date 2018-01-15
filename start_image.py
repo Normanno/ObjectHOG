@@ -1,10 +1,11 @@
-import cv2 as cv
-import sys
 import os
+import sys
+
+import cv2 as cv
 from matplotlib import pyplot as plt
-from image_processing.gamma_correction import gamma_correction
+
 from image_processing.histogram import extract_grey_levels_histogram
-import numpy as np
+from script_di_prova.gamma_correction import gamma_correction
 
 
 def imageProcess(src, dest):

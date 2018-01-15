@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 import sys
 import os
 
+
 class NormalizeBlocksHolder:
 
     def __init__(self, shape):
@@ -21,9 +22,11 @@ class NormalizeBlocksHolder:
     def get_blocks(self):
         return self.normalized_blocks
 
-def normalize_block(block_number, histograms):
+
+def normalize_block(block_index, histograms):
     """
     Normalize the blocks of cells
+    :param block_index: index of the normalized block, used for block holder
     :param histograms: a np.matrix containing the histograms of the cells that will form the block
     :return: block
     """
@@ -61,7 +64,7 @@ def normalize_block(block_number, histograms):
     # Show the normalized block
     # print "- Normalized block: "
     # print normalized_block
-    return block_number, normalized_block
+    return block_index, normalized_block
 
 
 def normalize_blocks(histograms):

@@ -54,6 +54,25 @@ def build_feature_vector(normalized_blocks):
     return feature_vector
 
 
+def feature_extraction(image, unsigned=True):
+    """
+    >feature_extraction(image)
+    this function extracts the feature from the nd
+    :param image: float32 ndarray representing the Region Of Interest (ROI)
+    :param unsigned: boolean indicate if the bins are signed(False) or unsigned(True), Default is True
+    :return: array of features
+    """
+    feature_vector = None
+    image = np.float32(image) / 255.0
+    magnitude, angle = calc_gradient(image)
+    histograms = calc_histograms(image, magnitude, angle, unsigned)
+    normalized_blocks = normalize_blocks(histograms)
+    if normalized_blocks is not None:
+        feature_vector = build_feature_vector(normalized_blocks)
+
+    return feature_vector
+
+
 if __name__ == "__main__":
     inImage = sys.argv[1]
     image = cv.imread(inImage, 0)
@@ -74,7 +93,7 @@ if __name__ == "__main__":
     histograms_per_block_sqrt = np.int_(np.sqrt(histograms_per_block))
 
     if histograms_per_block_sqrt <= histograms_rows and histograms_per_block_sqrt <= histograms_columns:
-        print "---[ Normalizing blocks... ]---"
+        printdef image_resize() "---[ Normalizing blocks... ]---"
         # Calculate blocks number and length
         blocks_number = (histograms_rows - histograms_per_block_sqrt + 1) * (histograms_columns - histograms_per_block_sqrt + 1)
         blocks_length = histograms_length * histograms_per_block
