@@ -5,6 +5,7 @@ from os.path import exists, splitext
 from xml.dom import minidom
 import math
 
+
 def parseAnnotation(annotation_file, classes_list):
     """
     > parseAnnotation(annotation_file, classes_list)
@@ -59,7 +60,7 @@ def parseAnnotation(annotation_file, classes_list):
 
 def parse_annotation_dict(annotation_file, classes_dict):
     """
-    > parseAnnotation(annotation_file, classes_list)
+    > parse_annotation_dict(annotation_file, classes_list)
     Parses the input annotation to search for the objects that have to be recognized
 
     :param annotation_file: the annotation to be parsed
