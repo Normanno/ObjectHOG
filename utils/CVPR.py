@@ -8,13 +8,13 @@ class AnnotationParser:
         if not os.path.exists(path):
             raise IOError('Error: ' + str(path) + " no such file or directory!")
         self.annotation_path = path
+        self.file_base_name = str(path).split('.')[0].rsplit('/', 1)
         self.objects_list = parse_obects_list
         self.parsed_objects = dict()
         self.min_width = roi_width
         self.min_height = roi_height
         self.image = None
         self.parse()
-
 
     def extract_minimum_bounding_box(self, bds):
         '''
@@ -35,6 +35,9 @@ class AnnotationParser:
         min_y = min(y_pts)
         boundings = {"max_x": max_x, "min_x": min_x, "max_y": max_y, "min_y": min_y}
         return boundings
+
+    def get_file_basename(self):
+        return self.file_base_name
 
     def parse(self):
         print self.annotation_path
