@@ -1,8 +1,8 @@
-import sys
 import os
-import numpy as np
+import sys
+
 from image_processing.feature_extraction import feature_extraction
-from model_processing.utils.CVPR import AnnotationParser
+from utils.CVPR import AnnotationParser
 
 
 def extract_training_features_SVM(classes_training_files, feature_dir, roi_width=64, roi_height=128):
