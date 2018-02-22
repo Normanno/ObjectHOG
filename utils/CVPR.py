@@ -11,6 +11,7 @@ class AnnotationParser:
         self.file_base_name = str(path).split('.')[0].rsplit('/', 1)
         self.objects_list = parse_obects_list
         self.parsed_objects = dict()
+        self.parsed_objects_number = dict()
         self.min_width = roi_width
         self.min_height = roi_height
         self.image = None
@@ -45,11 +46,13 @@ class AnnotationParser:
         root = tree.getroot()
 
         for node in root.findall('object'):
-            name = node.find('name').text
+            name = str(node.find('name').text).replace("\n", "")
             if (self.objects_list is not None and name in self.objects_list) or \
                     (self.objects_list is None):
                 if name not in self.parsed_objects.keys():
                     self.parsed_objects[name] = list()
+                    self.parsed_objects_number[name] = 0
+                self.parsed_objects_number[name] += 1
                 poly = node.find('polygon')
                 x_pts = [int(pt.find('x').text) for pt in poly.findall('pt')]
                 y_pts = [int(pt.find('y').text) for pt in poly.findall('pt')]
@@ -68,3 +71,5 @@ class AnnotationParser:
     def get_image_from_roi(self, roi):
         return self.image[roi["min_y"]: roi["max_y"], roi["min_x"]: roi["max_x"]]
 
+    def get_parsed_object_number_dict(self):
+        return self.parsed_objects_number
