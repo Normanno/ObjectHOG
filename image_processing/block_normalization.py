@@ -67,7 +67,7 @@ def normalize_block(block_index, histograms):
     return block_index, normalized_block
 
 
-def normalize_blocks(histograms):
+def normalize_blocks(histograms, stamp=False):
     histograms_rows, histograms_columns, histograms_length = histograms.shape
     histograms_number = histograms_rows * histograms_columns
     histograms_per_block = 4
@@ -76,7 +76,8 @@ def normalize_blocks(histograms):
     normalized_blocks_holder = None
 
     if histograms_per_block_sqrt <= histograms_rows and histograms_per_block_sqrt <= histograms_columns:
-        print "---[ Normalizing blocks... ]---"
+        if stamp:
+            print "---[ Normalizing blocks... ]---"
         # Calculate blocks number and length
         blocks_number = (histograms_rows - histograms_per_block_sqrt + 1) * (
         histograms_columns - histograms_per_block_sqrt + 1)
@@ -105,6 +106,7 @@ def normalize_blocks(histograms):
         process_pool.close()
         process_pool.join()
         elapsed = time.time() - start_time
-        print "*********milliseconds elapsed " + str(elapsed)
+        if stamp:
+            print "*********milliseconds elapsed " + str(elapsed)
 
     return None if normalized_blocks_holder is None else normalized_blocks_holder.get_blocks()

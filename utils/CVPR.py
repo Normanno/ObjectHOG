@@ -8,7 +8,8 @@ class AnnotationParser:
         if not os.path.exists(path):
             raise IOError('Error: ' + str(path) + " no such file or directory!")
         self.annotation_path = path
-        self.file_base_name = str(path).split('.')[0].rsplit('/', 1)
+        self.room = str(path).split('.')[0].rsplit('/', 1)[0].rsplit('/', 1)[1]
+        self.file_base_name = str(path).split('.')[0].rsplit('/', 1)[1]
         self.objects_list = parse_obects_list
         self.parsed_objects = dict()
         self.parsed_objects_number = dict()
@@ -40,8 +41,10 @@ class AnnotationParser:
     def get_file_basename(self):
         return self.file_base_name
 
+    def get_file_room_name(self):
+        return self.room
+
     def parse(self):
-        print self.annotation_path
         tree = ET.parse(self.annotation_path)
         root = tree.getroot()
 

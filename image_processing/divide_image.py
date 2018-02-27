@@ -5,10 +5,7 @@ from histrograms_calculation import calc_histograms
 from block_normalization import normalize_blocks
 
 
-def calc_new_shape(height, width, model_width=64, model_height=128):
-    print "Height: " + str(height)
-    print "Width: " + str(width)
-
+def calc_new_shape(height, width, model_width=64, model_height=128, stamp=False):
     new_height = model_height
     new_width = (new_height * width) / height
 
@@ -16,8 +13,12 @@ def calc_new_shape(height, width, model_width=64, model_height=128):
         new_height = (model_width * new_height) / new_width
         new_width = model_width
 
-    print "New height: " + str(new_height)
-    print "New width: " + str(new_width)
+    if stamp:
+        print "Height: " + str(height)
+        print "Width: " + str(width)
+        print "New height: " + str(new_height)
+        print "New width: " + str(new_width)
+
     return new_height, new_width
 
 

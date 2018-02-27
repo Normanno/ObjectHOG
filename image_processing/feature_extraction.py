@@ -5,24 +5,26 @@ from divide_image import resize_image
 from histrograms_calculation import calc_histograms
 from block_normalization import normalize_blocks
 
-def calc_gradient(image):
+
+def calc_gradient(image, stamp=False):
     gradient_x = cv.Sobel(image, cv.CV_32F, 1, 0, ksize=1)
     gradient_y = cv.Sobel(image, cv.CV_32F, 0, 1, ksize=1)
     magnitude, angle = cv.cartToPolar(gradient_x, gradient_y, angleInDegrees=True)
 
-    cv.imshow("X gradient", gradient_x)
-    cv.imshow("Y gradient", gradient_y)
-    cv.imshow("Magnitude", magnitude)
-    cv.imshow("Angle", angle)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    if stamp:
+        cv.imshow("X gradient", gradient_x)
+        cv.imshow("Y gradient", gradient_y)
+        cv.imshow("Magnitude", magnitude)
+        cv.imshow("Angle", angle)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
     angle = np.uint32(angle)
 
     return magnitude, angle
 
 
-def build_feature_vector(normalized_blocks):
+def build_feature_vector(normalized_blocks, stamp=False):
     """
     Build the HOG feature vector
     :param normalized_blocks: a matrix containing all the normalized blocks
@@ -31,12 +33,14 @@ def build_feature_vector(normalized_blocks):
 
     # Get the size and the number of the normalized blocks
     blocks_number, blocks_length = normalized_blocks.shape
-    print "- Blocks number: " + str(blocks_number)
-    print "- Blocks length: " + str(blocks_length)
+    if stamp:
+        print "- Blocks number: " + str(blocks_number)
+        print "- Blocks length: " + str(blocks_length)
 
     # Calculate the size of the feature vector to return and initialize it
     feature_vector_length = blocks_length * blocks_number
-    print "- Feature vector length: " + str(feature_vector_length)
+    if stamp:
+        print "- Feature vector length: " + str(feature_vector_length)
     feature_vector = np.zeros(feature_vector_length)
 
     # Fill the feature vector

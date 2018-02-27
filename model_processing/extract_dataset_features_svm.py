@@ -18,22 +18,32 @@ def extract_training_features_svm(classes_training_files, feature_dir, roi_width
     :param roi_height: equal the model height
     :return:
     """
+    classes_labels = {}
+    label_counter = 0
     for cl in classes_training_files.keys():
+        class_feat_dir = os.path.join(feature_dir, cl)
+        if not os.path.exists(class_feat_dir):
+            os.makedirs(class_feat_dir)
         for fi in classes_training_files[cl]:
-            for tr_file in fi.keys():
-                annotation_parser = AnnotationParser(tr_file, [cl])
-                features_file_path = feature_dir + str(cl) + '_' + annotation_parser.get_file_basename()
-                features_arrays = list()
-                for roi in annotation_parser.get_object_rois(cl):
-                    image = annotation_parser.get_image_from_roi(roi)
-                    image = resize_image(image, model_width=roi_width, model_height=roi_height)
-                    features_arrays.append(feature_extraction(image))
-                save_features_to(features_arrays, features_file_path)
+            print "class : " + cl + " - file : " + fi
+            annotation_parser = AnnotationParser(fi, [cl])
+            features_file_path = os.path.join(class_feat_dir, annotation_parser.get_file_basename())
+            features_arrays = list()
+            for roi in annotation_parser.get_object_rois(cl):
+                image = annotation_parser.get_image_from_roi(roi)
+                image = resize_image(image, model_width=roi_width, model_height=roi_height)
+                features_arrays.append(feature_extraction(image))
+            save_features_to_npz(features_arrays, features_file_path)
+        classes_labels[label_counter] = cl
+        label_counter += 1
+    with open('classes_labels.txt', 'w+') as classes_labels_file:
+        for key in sorted(classes_labels.keys()):
+            classes_labels_file.write(str(classes_labels[key]) + "\t" + str(key) + "\n")
 
 
-def save_features_to(feat_array, feat_file_path):
+def save_features_to_npz(feat_array, feat_file_path):
     """
-    >save_features(feat_array, feat_file)
+    >save_features_npz(feat_array, feat_file)
      Write the feat_array to feat_file (npz format see numpy.savez for more info)
     :param feat_array:
     :param feat_file_path:
@@ -45,9 +55,9 @@ def save_features_to(feat_array, feat_file_path):
     np.savez(feat_file_path, feat_array)
 
 
-def load_features_from(npz_file_path):
+def load_features_from_npz(npz_file_path):
     """
-    >load_features_from(npz_file_path)
+    >load_features_from_npz(npz_file_path)
      Reads all the features contained in the file specified by npz_file_path and returns a list of ndarray
     :param npz_file_path:
     :return:
@@ -95,7 +105,7 @@ def load_training_data_annotations(model_dir):
                 for line in tsf_list:
                     line = line.replace('\n', '').strip()
                     items = line.split('\t')
-                    classes_training_files_lists_dict[items[1]] = int(items[0])
+                    classes_training_files_lists_dict[key][items[1]] = int(items[0])
         else:
             print 'Error: ' + class_training_files_list_path + ' no such file or directory'
 

@@ -93,7 +93,7 @@ def bin_count(magnitude, angle, start_point, cell_dimension, bins_dimension, sig
     return start_point[0], start_point[1], bins
 
 
-def calc_histograms(image, magnitude, angle, unsigned=False):
+def calc_histograms(image, magnitude, angle, unsigned=False, stamp=False):
     """
     Cell dimensions: 8x8x1 (1 channel)
     Info in every pixel: 8x8x2 (magnitude and angle)
@@ -131,6 +131,7 @@ def calc_histograms(image, magnitude, angle, unsigned=False):
     process_pool.close()
     process_pool.join()
     elapsed = time.time() - start_time
-    print "*********milliseconds elapsed "+str(elapsed)
+    if stamp:
+        print "*********milliseconds elapsed "+str(elapsed)
     return histograms.get_histograms()
 
