@@ -6,39 +6,48 @@ from utils.CVPR import AnnotationParser
 from image_processing.divide_image import resize_image
 
 
-def extract_training_features_svm(classes_training_files, feature_dir, roi_width=64, roi_height=128):
+def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=64, roi_height=128, generate_labels=False):
     """
-    >extract_training_features_svm(classes_training_files, feature_dir, roi_width=64, roi_height=128)
+    >extract_features_svm(classes_training_files, feature_dir, roi_width=64, roi_height=128)
      Extract for each object and each annotation file, the features of the object's instances within the file,
      then saves the features array in the feature_dir.
      For each annotation file - object type a .npz file will be created.
-    :param classes_training_files: dict(key:object, value:dict( key:annotation file , value: #of object contained))
+    :param classes_data_files: dict(key:object, value:dict( key:annotation file , value: #of object contained))
     :param feature_dir: folder to save files
+    :param model_dir: model folder
     :param roi_width: equal to the model width
     :param roi_height: equal the model height
     :return:
     """
     classes_labels = {}
     label_counter = 0
-    for cl in classes_training_files.keys():
+    for cl in classes_data_files.keys():
         class_feat_dir = os.path.join(feature_dir, cl)
         if not os.path.exists(class_feat_dir):
             os.makedirs(class_feat_dir)
-        for fi in classes_training_files[cl]:
+        for fi in classes_data_files[cl]:
             print "class : " + cl + " - file : " + fi
-            annotation_parser = AnnotationParser(fi, [cl])
+            cls = None
+            if cl != 'none':
+                cls = [cl]
+            annotation_parser = AnnotationParser(fi, cls)
             features_file_path = os.path.join(class_feat_dir, annotation_parser.get_file_basename())
             features_arrays = list()
-            for roi in annotation_parser.get_object_rois(cl):
-                image = annotation_parser.get_image_from_roi(roi)
-                image = resize_image(image, model_width=roi_width, model_height=roi_height)
-                features_arrays.append(feature_extraction(image))
+            for roi in annotation_parser.get_object_rois(cl if cl != 'none' else None):
+                try:
+                    image = annotation_parser.get_image_from_roi(roi)
+                    image = resize_image(image, model_width=roi_width, model_height=roi_height)
+                    features_arrays.append(feature_extraction(image))
+                except Exception:
+                    print 'Exception: \n-class ' + cl + '\n-Annotation: ' + fi + '\n-ROI: ' + str(roi)
+
             save_features_to_npz(features_arrays, features_file_path)
         classes_labels[label_counter] = cl
         label_counter += 1
-    with open('classes_labels.txt', 'w+') as classes_labels_file:
-        for key in sorted(classes_labels.keys()):
-            classes_labels_file.write(str(classes_labels[key]) + "\t" + str(key) + "\n")
+    if generate_labels:
+        with open(os.path.join(model_dir, 'classes_labels.txt'), 'w+') as classes_labels_file:
+            for key in sorted(classes_labels.keys()):
+                classes_labels_file.write(str(classes_labels[key]) + "\t" + str(key) + "\n")
 
 
 def save_features_to_npz(feat_array, feat_file_path):
@@ -73,9 +82,9 @@ def load_features_from_npz(npz_file_path):
     return feats
 
 
-def load_training_data_annotations(model_dir):
+def load_data_annotations(model_dir, ends_with):
     """
-    >load_training_data_annotations(model_dir)
+    >load_data_annotations(model_dir)
     :param model_dir: root of model directory
     :return: dict(class, dict(annotation_file_path, #of_class_objects_in_annotation)
     """
@@ -99,7 +108,7 @@ def load_training_data_annotations(model_dir):
 
     #Read annotation files locations for each class
     for key in classes_training_files_lists_dict.keys():
-        class_training_files_list_path = classes_training_files_path + key + "_training_set.txt"
+        class_training_files_list_path = classes_training_files_path + key + ends_with
         if os.path.exists(class_training_files_list_path):
             with open(class_training_files_list_path, 'r') as tsf_list:
                 for line in tsf_list:
@@ -124,6 +133,7 @@ if __name__ == '__main__':
 
     model_dir = sys.argv[1]
     classes_dict = None
+    classes_test_dict = None
     if model_dir[len(model_dir) - 1:] != '/':
         model_dir += '/'
 
@@ -139,7 +149,8 @@ if __name__ == '__main__':
         print '***** Error: ' + model_dir + ' does not exist!'
         exit(1)
     try:
-        classes_dict = load_training_data_annotations(model_dir)
+        classes_dict = load_data_annotations(model_dir, "_training_set.txt")
+        classes_test_dict = load_data_annotations(model_dir, "_test_set.txt")
     except IOError as ex:
         print 'Error during config files load \n\t\t - ' + str(ex)
         exit(1)
@@ -152,4 +163,10 @@ if __name__ == '__main__':
     if not os.path.exists(training_data_feat_dir):
         os.makedirs(training_data_feat_dir)
 
-    extract_training_features_svm(classes_dict, training_data_feat_dir, roi_width, roi_height)
+    testing_data_feat_dir = model_dir + 'testing_data_feats_w'+str(roi_width)+'_h'+str(roi_height)+'/'
+    if not os.path.exists(testing_data_feat_dir):
+        os.makedirs(testing_data_feat_dir)
+
+    extract_features_svm(classes_dict, training_data_feat_dir, model_dir, roi_width, roi_height, True)
+    extract_features_svm(classes_test_dict, testing_data_feat_dir, model_dir, roi_width, roi_height)
+

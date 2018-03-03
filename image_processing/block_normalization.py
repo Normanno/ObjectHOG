@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 import sys
 import os
 
-
 class NormalizeBlocksHolder:
 
     def __init__(self, shape):
@@ -59,7 +58,11 @@ def normalize_block(block_index, histograms):
     l2_norm = np.sqrt(np.sum(square_block))
     #print "- L2 norm: " + str(l2_norm)
         # Normalize the block by dividing every element by the norm
-    normalized_block = [x / l2_norm for x in block]
+    if l2_norm != 0.0:
+        normalized_block = [x / l2_norm for x in block]
+    else:
+        normalized_block = list()
+        normalized_block.extend([0.0] * len(block))
 
     # Show the normalized block
     # print "- Normalized block: "

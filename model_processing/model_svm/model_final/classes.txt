@@ -3,3 +3,4 @@ lamp
 bottle
 table
 plant
+none

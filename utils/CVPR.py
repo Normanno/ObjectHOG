@@ -65,8 +65,24 @@ class AnnotationParser:
         img_path = img_path.replace('Annotations', 'Images').replace('xml', 'jpg')
         self.image = cv.imread(img_path, 0)
 
-    def get_object_rois(self, objectname):
-        return list() if objectname not in self.parsed_objects.keys() else self.parsed_objects[objectname]
+    def get_parse_objects_names(self):
+        return self.parsed_objects.keys()
+
+    def get_object_rois(self, objectname=None):
+        """
+        >get_object_rois(self, objectname=None)
+        returns the rois of the specified objectname, if ibjectname is None
+        it returns all the rois
+        :param objectname:
+        :return:
+        """
+        rois = list()
+        if objectname is None:
+            for n in self.parsed_objects.keys():
+                rois.extend(self.parsed_objects[n])
+        elif objectname in self.parsed_objects.keys():
+            rois = self.parsed_objects[objectname]
+        return rois
 
     def get_parsed_classes(self):
         return self.parsed_objects.keys()

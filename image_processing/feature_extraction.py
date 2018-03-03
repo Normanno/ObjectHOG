@@ -58,7 +58,7 @@ def build_feature_vector(normalized_blocks, stamp=False):
     return feature_vector
 
 
-def feature_extraction(image, unsigned=True):
+def feature_extraction(image, unsigned=True, stamp=False):
     """
     >feature_extraction(image)
     this function extracts the feature from the nd
@@ -68,12 +68,11 @@ def feature_extraction(image, unsigned=True):
     """
     feature_vector = None
     image = np.float32(image) / 255.0
-    magnitude, angle = calc_gradient(image)
-    histograms = calc_histograms(image, magnitude, angle, unsigned)
-    normalized_blocks = normalize_blocks(histograms)
+    magnitude, angle = calc_gradient(image, stamp=stamp)
+    histograms = calc_histograms(image, magnitude, angle, unsigned, stamp=stamp)
+    normalized_blocks = normalize_blocks(histograms, stamp=stamp)
     if normalized_blocks is not None:
-        feature_vector = build_feature_vector(normalized_blocks)
-
+        feature_vector = build_feature_vector(normalized_blocks, stamp=stamp)
     return feature_vector
 
 
