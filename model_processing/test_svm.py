@@ -16,7 +16,10 @@ def test_model(classes, model_dir, feats_dir):
     class_name = ''
     class_label = ''
     for cl in classes.keys():
-        classes_stats[cl] = { "correct": 0, "error": 0}
+        classes_stats[cl] = {"correct": 0, "error": 0, "classification: ": dict()}
+        classes_stats[cl]["classification"] = dict()
+        for cli in classes.keys():
+            classes_stats[cl]["classification"][cli] = 0
         class_name = classes[cl]
         class_label = cl
         class_feats_dir = os.path.join(feats_dir, class_name)
@@ -34,6 +37,8 @@ def test_model(classes, model_dir, feats_dir):
                 X_labels.extend([class_label] * feats_number)
     print '---[Start testing]---'
     Y_labels = clf.predict(X_data)
+    predict_probabilities = clf.predict_proba(X_data)
+    print "predict probabilities : " + str(predict_probabilities)
     if len(Y_labels) != len(X_labels):
         print 'Error : \n-Y_labels: ' + str(len(Y_labels)) + "\n-X_labels:" + str(len(X_labels))
     else:
@@ -43,15 +48,20 @@ def test_model(classes, model_dir, feats_dir):
             pl = Y_labels[i]
             if rl == pl:
                 classes_stats[rl]["correct"] += 1
+                classes_stats[rl]["classification"][rl] += 1
             else:
                 classes_stats[rl]["error"] += 1
+                classes_stats[rl]["classification"][pl] += 1
         print "---[Saving stats]---"
         stats_file = os.path.join(model_dir, 'stats.txt')
         with open(stats_file, 'w+') as sf:
             for cl in classes.keys():
-                sf.write(classes[cl]+"\n")
-                sf.write("\t-correct:\t" + str(classes_stats[cl]["correct"]) + "\n")
-                sf.write("\t-error:\t" + str(classes_stats[cl]["error"]) + "\n")
+                sf.write("-"+classes[cl]+"\n")
+                sf.write("--correct:\t" + str(classes_stats[cl]["correct"]) + "\n")
+                sf.write("--error:\t" + str(classes_stats[cl]["error"]) + "\n")
+                sf.write("--classified as:\n")
+                for cli in classes.keys():
+                    sf.write("---"+classes[cli]+":\t"+str(classes_stats[cl]["classification"][cli])+"\n")
     print '---[End of testing]---'
 
 

@@ -1,12 +1,13 @@
 import os
 import sys
 import numpy as np
+import cv2 as cv
 from image_processing.feature_extraction import feature_extraction
 from utils.CVPR import AnnotationParser
 from image_processing.divide_image import resize_image
 
 
-def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=64, roi_height=128, generate_labels=False):
+def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=64, roi_height=128, generate_labels=False, flip=False):
     """
     >extract_features_svm(classes_training_files, feature_dir, roi_width=64, roi_height=128)
      Extract for each object and each annotation file, the features of the object's instances within the file,
@@ -21,6 +22,9 @@ def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=6
     """
     classes_labels = {}
     label_counter = 0
+    if flip:
+        print "FLIP: true"
+
     for cl in classes_data_files.keys():
         class_feat_dir = os.path.join(feature_dir, cl)
         if not os.path.exists(class_feat_dir):
@@ -38,6 +42,9 @@ def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=6
                     image = annotation_parser.get_image_from_roi(roi)
                     image = resize_image(image, model_width=roi_width, model_height=roi_height)
                     features_arrays.append(feature_extraction(image))
+                    if flip:
+                        image_flip = cv.flip(image, 1)
+                        features_arrays.append(feature_extraction(image_flip))
                 except Exception:
                     print 'Exception: \n-class ' + cl + '\n-Annotation: ' + fi + '\n-ROI: ' + str(roi)
 
@@ -167,6 +174,6 @@ if __name__ == '__main__':
     if not os.path.exists(testing_data_feat_dir):
         os.makedirs(testing_data_feat_dir)
 
-    extract_features_svm(classes_dict, training_data_feat_dir, model_dir, roi_width, roi_height, True)
+    extract_features_svm(classes_dict, training_data_feat_dir, model_dir, roi_width, roi_height, True, flip=True)
     extract_features_svm(classes_test_dict, testing_data_feat_dir, model_dir, roi_width, roi_height)
 

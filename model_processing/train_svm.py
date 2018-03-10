@@ -35,7 +35,9 @@ def train_svm_CVPR(classes, model_dir, feats_dir):
                 X_labels.extend([class_label] * feats_number)
     print '---[Starting training]---'
     print 'kernel : rbf'
-    clf = svm.SVC(kernel='rbf')
+    print 'probability: true'
+    print '# of data: '+str(len(X_data))
+    clf = svm.SVC(kernel='rbf', probability=True)
     clf.fit(X_data, X_labels)
     print '---[End of training]---'
     out_model = os.path.join(model_dir, "model.pkl")
