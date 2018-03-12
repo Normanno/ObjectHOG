@@ -2,6 +2,8 @@
 
 import Tkinter as tk
 from Tkinter import *
+import tkMessageBox
+import tkFileDialog
 import threading
 from sklearn.externals import joblib
 import cv2 as cv
@@ -34,6 +36,16 @@ class Application(tk.Frame):
         self.video_stream = None
         self.thread = None
         self.frame = None
+        self.options_window = None
+        self.sliding_window_options_frame = None
+        self.sliding_window_width = 64
+        self.sliding_window_height = 128
+        self.sliding_window_horizontal_step = 32
+        self.sliding_window_vertical_step = 64
+        self.sliding_window_height_entry = None
+        self.sliding_window_width_entry = None
+        self.sliding_window_horizontal_step_entry = None
+        self.sliding_window_vertical_step_entry = None
         self.stopEvent = threading.Event()
         self.bottom_video_frame = None
         self.bottom_image_frame = None
@@ -42,6 +54,7 @@ class Application(tk.Frame):
 
     def init_window(self):
         self.init_menu()
+        #self.init_sliding_window()
         self.create_widgets()
 
     def init_menu(self):
@@ -54,15 +67,37 @@ class Application(tk.Frame):
         source_menu = Menu(menu)
         source_menu.add_command(label="Camera", command=self.init_video_gui)
         source_menu.add_command(label="Image", command=self.init_image_gui)
-#        source_menu.add_command(label="Start Camera", command=self.start_video)
-#        source_menu.add_command(label="Stop Camera", command=self.stop_video)
-#        source_menu.add_command(label="Classify all image", command=self.classify_all_image)
-#        source_menu.add_command(label="Classify signle object", command=self.classify_single_object)
         menu.add_cascade(label="Source", menu=source_menu)
 
         model_menu = Menu(menu)
-        model_menu.add_command(label="Choose model", command=self.choose_model_file)
-        menu.add_cascade(label="Model", menu=model_menu)
+        model_menu.add_command(label="Choose Model", command=self.choose_model_file)
+        model_menu.add_command(label="Sliding window", command=self.display_sliding_window_options)
+        menu.add_cascade(label="Classification", menu=model_menu)
+
+    def init_sliding_window(self):
+        self.sliding_window_options_frame = Frame(self.master)
+        sliding_window_height_label = Label(self.sliding_window_options_frame, text="Sliding window height")
+        sliding_window_height_label.grid(row=0, column=0)
+        sliding_window_width_label = Label(self.sliding_window_options_frame, text="Sliding window width")
+        sliding_window_width_label.grid(row=1, column=0)
+        self.sliding_window_height_entry = Entry(self.sliding_window_options_frame)
+        self.sliding_window_height_entry.grid(row=0, column=1)
+        self.sliding_window_width_entry = Entry(self.sliding_window_options_frame)
+        self.sliding_window_width_entry.grid(row=1, column=1)
+
+        sliding_window_vertical_step_label = Label(self.sliding_window_options_frame, text="Sliding window vertical pass")
+        sliding_window_vertical_step_label.grid(row=2, column=0)
+        sliding_window_horizontal_step_label = Label(self.sliding_window_options_frame, text="Sliding window horizontal pass")
+        sliding_window_horizontal_step_label.grid(row=3, column=0)
+        self.sliding_window_vertical_step_entry = Entry(self.sliding_window_options_frame)
+        self.sliding_window_vertical_step_entry.grid(row=2, column=1)
+        self.sliding_window_horizontal_step_entry = Entry(self.sliding_window_options_frame)
+        self.sliding_window_horizontal_step_entry.grid(row=3, column=1)
+
+        save_button = Button(self.sliding_window_options_frame, text="Save", command=self.save_sliding_window_values)
+        save_button.grid(row=4, column=0)
+        save_and_exit_button = Button(self.sliding_window_options_frame, text="Save and Exit", command=self.save_sliding_window_values_and_exit)
+        save_and_exit_button.grid(row=4, column=1)
 
     def create_widgets(self):
         print 'creating widgets'
@@ -72,7 +107,8 @@ class Application(tk.Frame):
         play_button.grid(row=0, column=0)
         stop_button = Button(self.bottom_video_frame, text="Stop", command=self.stop_video)
         stop_button.grid(row=0, column=1)
-
+        save_image = Button(self.bottom_video_frame, text="Save Iamge", command=self.save_video_frame)
+        save_image.grid(row=0, column=2)
         choose_img_button = Button(self.bottom_image_frame, text="Choose Image", command=self.choose_image)
         choose_img_button.grid(row=0, column=0)
         classify_image = Button(self.bottom_image_frame, text="Classify", command=self.classify_all_image)
@@ -114,9 +150,6 @@ class Application(tk.Frame):
         # if the panel is not None, we need to initialize it
         self.update_panel(image)
 
-    def classify_all_image(self):
-        print "select image"
-
     def classify_single_object(self):
         print "select single object"
 
@@ -125,6 +158,7 @@ class Application(tk.Frame):
         print "init video gui"
         self.bottom_image_frame.grid_forget()
         self.bottom_video_frame.grid(row=5, column=0)
+        self.start_video()
 
     def start_video(self):
         self.init_video_stream()
@@ -135,17 +169,25 @@ class Application(tk.Frame):
     def stop_video(self):
         self.stopEvent.set()
 
+    def save_video_frame(self):
+        f = tkFileDialog.asksaveasfile(mode='w')
+        if f is None:  # asksaveasfile return `None` if dialog closed with "cancel".
+            return
+        f.close()
+        cv.imwrite(f.name, self.frame)
+
     def video_loop(self):
         try:
             while not self.stopEvent.is_set():
                 ret, self.frame = self.video_stream.read()
                 self.frame = imutils.resize(self.frame, width=self.window_width, height=self.window_height)
-                # OpenCV represents images in BGR order
-                # PIL represents images in RGB order
-                #  then convert to PIL and ImageTk format
-                image = cv.cvtColor(self.frame, cv.COLOR_BGR2RGB)
-                image = Image.fromarray(image)
-                image = ImageTk.PhotoImage(image)
+                if self.classifier is not None:
+                    image = self.classify_all_image()
+                else:
+                    image = cv.cvtColor(self.frame, cv.COLOR_BGR2RGB)
+                    image = cv.flip(image, 1)
+                    image = Image.fromarray(image)
+                    image = ImageTk.PhotoImage(image)
                 self.update_panel(image)
 
         except RuntimeError, e:
@@ -154,7 +196,7 @@ class Application(tk.Frame):
             self.video_stream.release()
             self.video_stream = None
 
-    #model
+    #MODEL
     def choose_model_file(self):
         self.actual_model_path = askopenfilename(title="Select model file", filetypes=self.model_file_types)
         print "Chosen model path : "+self.actual_model_path
@@ -166,6 +208,86 @@ class Application(tk.Frame):
             for line in cf:
                 fields = line.replace("\n", "").split("\t")
                 self.classes_dict[fields[0]] = fields[1]
+
+    def classify_all_image(self):
+
+        return self.frame
+
+    def save_sliding_window_values(self):
+        sw_h = 0
+        sw_w = 0
+        sw_vs = 0
+        sw_hs = 0
+        error = False
+
+        try:
+            sw_h = int(self.sliding_window_height_entry.get())
+        except ValueError:
+            tkMessageBox.showerror("Error", "Height must be an integer")
+            error = True
+
+        try:
+            sw_w = int(self.sliding_window_width_entry.get())
+        except ValueError:
+            tkMessageBox.showerror("Error", "Width must be an integer")
+            error = True
+
+        try:
+            sw_vs = int(self.sliding_window_vertical_step_entry.get())
+        except ValueError:
+            tkMessageBox.showerror("Error", "Vertical step must be an integer")
+            error = True
+
+        try:
+            sw_h = int(self.sliding_window_horizontal_step_entry.get())
+        except ValueError:
+            tkMessageBox.showerror("Error", "Horizontal step must be an integer")
+            error = True
+
+        if not error:
+            self.sliding_window_height = sw_h
+            self.sliding_window_width = sw_w
+            self.sliding_window_vertical_step = sw_vs
+            self.sliding_window_horizontal_step = sw_hs
+        return not error
+
+    def save_sliding_window_values_and_exit(self):
+        if self.save_sliding_window_values():
+            self.options_window.destroy()
+
+    def display_sliding_window_options(self):
+        self.options_window = Toplevel(self.master)
+        self.sliding_window_options_frame = Frame(self.options_window)
+        self.sliding_window_options_frame.grid(row=0, column=0)
+        sliding_window_height_label = Label(self.sliding_window_options_frame, text="Sliding window height")
+        sliding_window_height_label.grid(row=0, column=0)
+        sliding_window_width_label = Label(self.sliding_window_options_frame, text="Sliding window width")
+        sliding_window_width_label.grid(row=1, column=0)
+        self.sliding_window_height_entry = Entry(self.sliding_window_options_frame)
+        self.sliding_window_height_entry.grid(row=0, column=1)
+        self.sliding_window_height_entry.insert(0, self.sliding_window_height)
+        self.sliding_window_width_entry = Entry(self.sliding_window_options_frame)
+        self.sliding_window_width_entry.grid(row=1, column=1)
+        self.sliding_window_width_entry.insert(0, self.sliding_window_width)
+
+        sliding_window_vertical_step_label = Label(self.sliding_window_options_frame,
+                                                   text="Sliding window vertical step")
+        sliding_window_vertical_step_label.grid(row=2, column=0)
+        sliding_window_horizontal_step_label = Label(self.sliding_window_options_frame,
+                                                     text="Sliding window horizontal step")
+        sliding_window_horizontal_step_label.grid(row=3, column=0)
+        self.sliding_window_vertical_step_entry = Entry(self.sliding_window_options_frame)
+        self.sliding_window_vertical_step_entry.grid(row=2, column=1)
+        self.sliding_window_vertical_step_entry.insert(0, self.sliding_window_vertical_step)
+        self.sliding_window_horizontal_step_entry = Entry(self.sliding_window_options_frame)
+        self.sliding_window_horizontal_step_entry.grid(row=3, column=1)
+        self.sliding_window_horizontal_step_entry.insert(0, self.sliding_window_horizontal_step)
+
+        save_button = Button(self.sliding_window_options_frame, text="Save", command=self.save_sliding_window_values)
+        save_button.grid(row=4, column=0)
+        save_and_exit_button = Button(self.sliding_window_options_frame, text="Save and Exit",
+                                      command=self.save_sliding_window_values_and_exit)
+        save_and_exit_button.grid(row=4, column=1)
 
     def client_exit(self):
         print "Exit from HOG GUI"

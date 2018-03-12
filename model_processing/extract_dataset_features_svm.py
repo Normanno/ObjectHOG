@@ -7,7 +7,7 @@ from utils.CVPR import AnnotationParser
 from image_processing.divide_image import resize_image
 
 
-def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=64, roi_height=128, generate_labels=False, flip=False):
+def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=64, roi_height=128, generate_labels=False, flip=False, border=0, debug=False, debug_label=''):
     """
     >extract_features_svm(classes_training_files, feature_dir, roi_width=64, roi_height=128)
      Extract for each object and each annotation file, the features of the object's instances within the file,
@@ -18,6 +18,9 @@ def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=6
     :param model_dir: model folder
     :param roi_width: equal to the model width
     :param roi_height: equal the model height
+    :param generate_labels: if true generates the labels file
+    :param flip: il true extracts fliped images
+    :param border: the border taken around the image
     :return:
     """
     classes_labels = {}
@@ -25,7 +28,15 @@ def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=6
     if flip:
         print "FLIP: true"
 
+    used_classes_data_files = dict()
+    unused_classes_data_files = dict()
+    per_class_used_annotations = dict()
+    per_class_unused_annotations = dict()
     for cl in classes_data_files.keys():
+        used_classes_data_files[cl] = dict()
+        unused_classes_data_files[cl] = dict()
+        per_class_used_annotations[cl] = 0
+        per_class_unused_annotations[cl] = 0
         class_feat_dir = os.path.join(feature_dir, cl)
         if not os.path.exists(class_feat_dir):
             os.makedirs(class_feat_dir)
@@ -39,14 +50,22 @@ def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=6
             features_arrays = list()
             for roi in annotation_parser.get_object_rois(cl if cl != 'none' else None):
                 try:
-                    image = annotation_parser.get_image_from_roi(roi)
+                    image = annotation_parser.get_image_from_roi(roi, border=border)
                     image = resize_image(image, model_width=roi_width, model_height=roi_height)
                     features_arrays.append(feature_extraction(image))
                     if flip:
                         image_flip = cv.flip(image, 1)
                         features_arrays.append(feature_extraction(image_flip))
+                    if fi not in used_classes_data_files[cl].keys():
+                        used_classes_data_files[cl][fi] = 0
+                    used_classes_data_files[cl][fi] += 1
+                    per_class_used_annotations += 1
                 except Exception:
-                    print 'Exception: \n-class ' + cl + '\n-Annotation: ' + fi + '\n-ROI: ' + str(roi)
+                   # print 'Exception: \n-class ' + cl + '\n-Annotation: ' + fi + '\n-ROI: ' + str(roi)
+                    if fi not in unused_classes_data_files[cl].keys():
+                        unused_classes_data_files[cl][fi] = 0
+                    unused_classes_data_files[cl][fi] += 1
+                    per_class_used_annotations[cl] += 1
 
             save_features_to_npz(features_arrays, features_file_path)
         classes_labels[label_counter] = cl
@@ -55,7 +74,23 @@ def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=6
         with open(os.path.join(model_dir, 'classes_labels.txt'), 'w+') as classes_labels_file:
             for key in sorted(classes_labels.keys()):
                 classes_labels_file.write(str(classes_labels[key]) + "\t" + str(key) + "\n")
+    if debug:
+        print "Writing debug info"
+        with open(os.path.join(os.path.join(model_dir, debug_label), 'per_class_used_annotations.txt'), 'w+') as pca:
+            for cl in per_class_used_annotations.keys():
+                pca.write(str(cl) + " : " + str(per_class_used_annotations[cl])+"\n")
+        with open(os.path.join(os.path.join(model_dir, debug_label), 'per_class_unused_annotations.txt'), 'w+') as pca:
+            for cl in per_class_unused_annotations.keys():
+                pca.write(str(cl) + " : " + str(per_class_unused_annotations[cl]) + "\n")
 
+        for cl in per_class_used_annotations.keys():
+            with open(os.path.join(os.path.join(model_dir, debug_label), str(cl)+'_used_annotation.txt'), 'w+') as ua:
+                for fi in used_classes_data_files[cl].keys():
+                    ua.write(str(used_classes_data_files[cl][fi]) + "\t" + str(fi) + "\n")
+            with open(os.path.join(os.path.join(model_dir, debug_label), str(cl) + '_unused_annotation.txt'), 'w+') as ua:
+                for fi in used_classes_data_files[cl].keys():
+                    ua.write(str(unused_classes_data_files[cl][fi]) + "\t" + str(fi) + "\n")
+        print "End Writing debug info"
 
 def save_features_to_npz(feat_array, feat_file_path):
     """
@@ -134,8 +169,10 @@ if __name__ == '__main__':
         print '***** Error *****'
         print 'This program requires 1 arguments ('+str(len(sys.argv)-1)+') given :'
         print '(1) model src directory, (root of the model config dir)'
-        print '(2)(optional) roi width (default 64)'
-        print '(3)(optional) roi height (default 128)'
+        print '(2) --width=W ;roi width (default 64)'
+        print '(3) --height=H ;roi height (default 128)'
+        print '(4) --border=B ;border around the image (default 0)'
+        print '(5) --debug produce debug output in debug_testing, debug_training folders'
         exit(1)
 
     model_dir = sys.argv[1]
@@ -146,11 +183,26 @@ if __name__ == '__main__':
 
     roi_width = 64
     roi_height = 128
+    border = 0
+    debug = False
+    i = 0
     if len(sys.argv) > 2:
-        roi_width = int(sys.argv[2])
-
-    if len(sys.argv) > 3:
-        roi_height = int(sys.argv[3])
+        print "****Selected Parameters****"
+        for i in range(2, len(sys.argv)):
+            param = str(sys.argv[i])
+            if "width" in param:
+                roi_width = int(param.split("=")[1])
+                print "-roi_width="+str(roi_width)
+            elif "height" in param:
+                roi_height = int(param.split("=")[1])
+                print "-roi_height" + str(roi_height)
+            elif "border" in param:
+                border = int(param.split("=")[1])
+                print "-border=" + str(border)
+            elif "debug" in param:
+                debug = True
+                print "-debug Active"
+        print "****End Selected Parameters****"
 
     if not os.path.isdir(model_dir):
         print '***** Error: ' + model_dir + ' does not exist!'
@@ -174,6 +226,15 @@ if __name__ == '__main__':
     if not os.path.exists(testing_data_feat_dir):
         os.makedirs(testing_data_feat_dir)
 
-    extract_features_svm(classes_dict, training_data_feat_dir, model_dir, roi_width, roi_height, True, flip=True)
-    extract_features_svm(classes_test_dict, testing_data_feat_dir, model_dir, roi_width, roi_height)
-
+    if debug:
+        debug_training_path = os.path.join(model_dir, "debug_training")
+        if not os.path.exists(debug_training_path):
+            os.mkdir(debug_training_path)
+        debug_testing_path = os.path.join(model_dir, "debug_testing")
+        if not os.path.exists(debug_testing_path):
+            os.mkdir(debug_testing_path)
+        extract_features_svm(classes_dict, training_data_feat_dir, model_dir, roi_width, roi_height, True, flip=True, border=border, debug=True, debug_label="debug_training")
+        extract_features_svm(classes_test_dict, testing_data_feat_dir, model_dir, roi_width, roi_height, border=border, debug=True, debug_label="debug_testing")
+    else:
+        extract_features_svm(classes_dict, training_data_feat_dir, model_dir, roi_width, roi_height, True, flip=True, border=border)
+        extract_features_svm(classes_test_dict, testing_data_feat_dir, model_dir, roi_width, roi_height, border=border)

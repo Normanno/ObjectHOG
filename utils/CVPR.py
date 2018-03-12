@@ -87,8 +87,8 @@ class AnnotationParser:
     def get_parsed_classes(self):
         return self.parsed_objects.keys()
 
-    def get_image_from_roi(self, roi):
-        return self.image[roi["min_y"]: roi["max_y"], roi["min_x"]: roi["max_x"]]
+    def get_image_from_roi(self, roi, border=0):
+        return self.image[roi["min_y"]-border: roi["max_y"]+border, roi["min_x"]-border: roi["max_x"]+border]
 
     def get_parsed_object_number_dict(self):
         return self.parsed_objects_number
