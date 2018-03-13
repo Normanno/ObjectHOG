@@ -102,9 +102,9 @@ def calc_histograms(image, magnitude, angle, unsigned=False, stamp=False):
     Bins number: 12 (best results in paper for unsigned gradients)
     """
     start_time = time.time()
-    bins_number = 9
-    if not unsigned:
-        bins_number = 12
+    bins_number = 18
+    if unsigned:
+        bins_number = bins_number / 2
     cell_dimension = 8
     image_height, image_width = image.shape
     hist_rows = image_height / cell_dimension

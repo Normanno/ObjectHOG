@@ -4,6 +4,7 @@ import sys
 from divide_image import resize_image
 from histrograms_calculation import calc_histograms
 from block_normalization import normalize_blocks
+from preprocessing import preprocess
 
 
 def calc_gradient(image, stamp=False):
@@ -67,12 +68,14 @@ def feature_extraction(image, unsigned=True, stamp=False):
     :return: array of features
     """
     feature_vector = None
+    image = preprocess(image)
     image = np.float32(image) / 255.0
     magnitude, angle = calc_gradient(image, stamp=stamp)
     histograms = calc_histograms(image, magnitude, angle, unsigned, stamp=stamp)
     normalized_blocks = normalize_blocks(histograms, stamp=stamp)
     if normalized_blocks is not None:
         feature_vector = build_feature_vector(normalized_blocks, stamp=stamp)
+
     return feature_vector
 
 

@@ -26,10 +26,18 @@ def resize_image(image, model_width=64, model_height=128):
     height, width = image.shape
     new_height, new_width = calc_new_shape(height, width, model_width, model_height)
     resized_image = cv.resize(image, (new_width, new_height))
-    final_image = cv.copyMakeBorder(resized_image, 0, model_height - new_height, 0, model_width - new_width, cv.BORDER_CONSTANT)
-
+    v_correction = 0
+    h_correction = 0
+    if (model_height - new_height) % 2 == 1:
+        v_correction = 1
+    if (model_width - new_width) % 2 == 1:
+        h_correction = 1
+    top_border = (model_height - new_height) / 2
+    right_border = ((model_width - new_width) / 2) + h_correction
+    bottom_border = ((model_height - new_height) / 2) + v_correction
+    left_border = (model_width - new_width) / 2
+    final_image = cv.copyMakeBorder(resized_image, top_border, bottom_border, left_border, right_border, cv.BORDER_CONSTANT)
     return final_image
-
 
 if __name__ == "__main__":
     inImage = sys.argv[1]
