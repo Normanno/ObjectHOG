@@ -2,8 +2,8 @@ import os
 from xml.etree import ElementTree as ET
 import cv2 as cv
 
-class AnnotationParser:
 
+class AnnotationParser:
     def __init__(self, path, parse_obects_list=None, roi_width=64, roi_height=128):
         if not os.path.exists(path):
             raise IOError('Error: ' + str(path) + " no such file or directory!")
@@ -19,10 +19,6 @@ class AnnotationParser:
         self.parse()
 
     def extract_minimum_bounding_box(self, bds):
-        '''
-            The minimum bounding box for the object is represented by a
-            tuple with four points: top-right, bottom-right, bottom-left, top-left
-        '''
         bounding_box = [[bds["min_x"], bds["max_y"]], [bds["max_x"], bds["max_y"]], [bds["max_x"], bds["min_y"]], [bds["min_x"], bds["min_y"]]]
 
         return bounding_box
@@ -59,7 +55,8 @@ class AnnotationParser:
                 poly = node.find('polygon')
                 x_pts = [int(pt.find('x').text) for pt in poly.findall('pt')]
                 y_pts = [int(pt.find('y').text) for pt in poly.findall('pt')]
-                #Add the minimum boundings to the parsed objects list
+
+                # Add the minimum boundings to the parsed objects list
                 self.parsed_objects[name].append(self.extract_boundings(x_pts, y_pts))
         img_path = str(self.annotation_path)
         img_path = img_path.replace('Annotations', 'Images').replace('xml', 'jpg')
@@ -69,13 +66,6 @@ class AnnotationParser:
         return self.parsed_objects.keys()
 
     def get_object_rois(self, objectname=None):
-        """
-        >get_object_rois(self, objectname=None)
-        returns the rois of the specified objectname, if ibjectname is None
-        it returns all the rois
-        :param objectname:
-        :return:
-        """
         rois = list()
         if objectname is None:
             for n in self.parsed_objects.keys():

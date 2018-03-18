@@ -6,13 +6,6 @@ import os
 
 
 def train_svm_CVPR(classes, model_dir, feats_dir):
-    """
-    >train_svm(classes, model_dir, feats_dir)
-    :param classes: dictionary label:class_name
-    :param model_dir:
-    :param feats_dir:
-    :return:
-    """
     X_data = []
     X_labels = []
     class_name = ''
@@ -42,6 +35,7 @@ def train_svm_CVPR(classes, model_dir, feats_dir):
     print '---[End of training]---'
     out_model = os.path.join(model_dir, "model.pkl")
     joblib.dump(clf, out_model)
+
 
 if __name__ == "__main__":
     print "train"

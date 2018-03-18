@@ -53,6 +53,7 @@ def resize_image(image, model_width=64, model_height=128, centered=True, blur_ou
                                     cv.BORDER_CONSTANT)
     return final_image
 
+
 if __name__ == "__main__":
     inImage = sys.argv[1]
     image = cv.imread(inImage, 0)

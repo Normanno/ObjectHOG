@@ -8,21 +8,6 @@ from image_processing.divide_image import resize_image
 
 
 def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=64, roi_height=128, generate_labels=False, flip=False, border=0, debug=False, debug_label=''):
-    """
-    >extract_features_svm(classes_training_files, feature_dir, roi_width=64, roi_height=128)
-     Extract for each object and each annotation file, the features of the object's instances within the file,
-     then saves the features array in the feature_dir.
-     For each annotation file - object type a .npz file will be created.
-    :param classes_data_files: dict(key:object, value:dict( key:annotation file , value: #of object contained))
-    :param feature_dir: folder to save files
-    :param model_dir: model folder
-    :param roi_width: equal to the model width
-    :param roi_height: equal the model height
-    :param generate_labels: if true generates the labels file
-    :param flip: il true extracts fliped images
-    :param border: the border taken around the image
-    :return:
-    """
     classes_labels = {}
     label_counter = 0
     if flip:
@@ -61,7 +46,6 @@ def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=6
                     used_classes_data_files[cl][fi] += 1
                     per_class_used_annotations += 1
                 except Exception:
-                   # print 'Exception: \n-class ' + cl + '\n-Annotation: ' + fi + '\n-ROI: ' + str(roi)
                     if fi not in unused_classes_data_files[cl].keys():
                         unused_classes_data_files[cl][fi] = 0
                     unused_classes_data_files[cl][fi] += 1
@@ -92,14 +76,8 @@ def extract_features_svm(classes_data_files, feature_dir, model_dir, roi_width=6
                     ua.write(str(unused_classes_data_files[cl][fi]) + "\t" + str(fi) + "\n")
         print "End Writing debug info"
 
+
 def save_features_to_npz(feat_array, feat_file_path):
-    """
-    >save_features_npz(feat_array, feat_file)
-     Write the feat_array to feat_file (npz format see numpy.savez for more info)
-    :param feat_array:
-    :param feat_file_path:
-    :return:
-    """
     if os.path.exists(feat_file_path):
         raise IOError('Error: ' + feat_file_path + ' already exists!')
 
@@ -107,12 +85,6 @@ def save_features_to_npz(feat_array, feat_file_path):
 
 
 def load_features_from_npz(npz_file_path):
-    """
-    >load_features_from_npz(npz_file_path)
-     Reads all the features contained in the file specified by npz_file_path and returns a list of ndarray
-    :param npz_file_path:
-    :return:
-    """
     try:
         npz_file = np.load(npz_file_path)
     except IOError as ioe:
@@ -125,12 +97,6 @@ def load_features_from_npz(npz_file_path):
 
 
 def load_data_annotations(model_dir, ends_with):
-    """
-    >load_data_annotations(model_dir)
-    :param model_dir: root of model directory
-    :return: dict(class, dict(annotation_file_path, #of_class_objects_in_annotation)
-    """
-
     if model_dir[len(model_dir)-1:] != '/':
         model_dir += '/'
     if not os.path.exists(model_dir):
@@ -141,14 +107,14 @@ def load_data_annotations(model_dir, ends_with):
     classes = []
     classes_training_files_lists_dict = dict()
 
-    #Read selected classes
+    # Read selected classes
     with open(classes_path, 'r') as classes_file:
         for line in classes_file:
             c = line.replace('\n', '').strip()
             classes.append(c)
             classes_training_files_lists_dict[c] = dict()
 
-    #Read annotation files locations for each class
+    # Read annotation files locations for each class
     for key in classes_training_files_lists_dict.keys():
         class_training_files_list_path = classes_training_files_path + key + ends_with
         if os.path.exists(class_training_files_list_path):

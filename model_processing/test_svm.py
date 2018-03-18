@@ -65,9 +65,6 @@ def test_model(classes, model_dir, feats_dir):
     print '---[End of testing]---'
 
 
-
-
-
 if __name__ == "__main__":
     print "train"
     if len(sys.argv) < 2:

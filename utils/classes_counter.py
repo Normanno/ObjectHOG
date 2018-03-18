@@ -16,7 +16,7 @@ if __name__ == '__main__':
                     objects[key] = 0
                 objects[key] += parsed_objects[key]
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    with file( dir_path + '/objects_numbers', 'w+') as out_file:
+    with file(dir_path + '/objects_numbers', 'w+') as out_file:
         keys = objects.keys()
         keys.sort()
         for key in keys:

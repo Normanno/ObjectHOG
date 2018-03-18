@@ -33,7 +33,6 @@ bin_position_12 = {
 
 
 class HistogramHolder:
-
     def __init__(self, shape):
         # creation fo a ndarray (full of zeros) in which the third dimension represents
         # the bins for the cell located by first two
@@ -50,15 +49,6 @@ class HistogramHolder:
 
 
 def bin_count(magnitude, angle, start_point, cell_dimension, bins_dimension, signed_angles):
-    """
-    :param magnitude:
-    :param angle:
-    :param bins_dimension:
-    :param cell_dimension:
-    :param start_point: array with x,y of the first point of the top-left point of the cell
-    :param signed_angles: True if the angles are signed, False otherwise
-    :return:
-    """
     bins = np.zeros(shape=bins_dimension)
     for i in range(0, cell_dimension):
         for j in range(0, cell_dimension):
@@ -94,13 +84,6 @@ def bin_count(magnitude, angle, start_point, cell_dimension, bins_dimension, sig
 
 
 def calc_histograms(image, magnitude, angle, unsigned=False, stamp=False):
-    """
-    Cell dimensions: 8x8x1 (1 channel)
-    Info in every pixel: 8x8x2 (magnitude and angle)
-    Bins number: 9 (best results in paper for signed gradients)
-        OR
-    Bins number: 12 (best results in paper for unsigned gradients)
-    """
     start_time = time.time()
     bins_number = 18
     if unsigned:

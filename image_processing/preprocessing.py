@@ -5,6 +5,7 @@ import sys
 import os
 import warnings
 
+
 def automatic_gamma_correction_gray(src):
     # Bit depth of the image
     img_range = 1

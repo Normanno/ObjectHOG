@@ -26,12 +26,6 @@ def calc_gradient(image, stamp=False):
 
 
 def build_feature_vector(normalized_blocks, stamp=False):
-    """
-    Build the HOG feature vector
-    :param normalized_blocks: a matrix containing all the normalized blocks
-    :return: feature_vector
-    """
-
     # Get the size and the number of the normalized blocks
     blocks_number, blocks_length = normalized_blocks.shape
     if stamp:
@@ -52,22 +46,10 @@ def build_feature_vector(normalized_blocks, stamp=False):
         index = index + blocks_length
         blocks_count = blocks_count + 1
 
-    # Show the feature vector
-    # print "- HOG feature vector: "
-    # print feature_vector
-
     return feature_vector
 
 
 def feature_extraction(image, unsigned=True, stamp=False, gamma=True):
-    """
-    >feature_extraction(image)
-    this function extracts the feature from the nd
-    :param image: float32 ndarray representing the Region Of Interest (ROI)
-    :param unsigned: boolean indicate if the bins are signed(False) or unsigned(True), Default is True
-    :param stamp: if True the scripts will display all the run-info (Default=False)
-    :return: array of features
-    """
     feature_vector = None
     image = preprocess(image, gamma)
     image = np.float32(image) / 255.0
@@ -95,32 +77,8 @@ if __name__ == "__main__":
     histograms = calc_histograms(resized_image, magnitude, angle, True)
     print "---[ Cell histogram calculated ]---\n"
 
-    '''
-    histograms_rows, histograms_columns, histograms_length = histograms.shape
-    histograms_number = histograms_rows * histograms_columns
-    histograms_per_block = 4
-    histograms_per_block_sqrt = np.int_(np.sqrt(histograms_per_block))
-
-    if histograms_per_block_sqrt <= histograms_rows and histograms_per_block_sqrt <= histograms_columns:
-        printdef image_resize() "---[ Normalizing blocks... ]---"
-        # Calculate blocks number and length
-        blocks_number = (histograms_rows - histograms_per_block_sqrt + 1) * (histograms_columns - histograms_per_block_sqrt + 1)
-        blocks_length = histograms_length * histograms_per_block
-
-        # Normalize blocks
-        normalized_blocks = np.zeros([blocks_number, blocks_length])
-        blocks_count = 0
-        for i in range(0, histograms_rows - histograms_per_block_sqrt + 1):
-            for j in range(0, histograms_columns - histograms_per_block_sqrt + 1):
-                print "Block #" + str(blocks_count + 1)
-                normalized_blocks[blocks_count][:] = normalize_block(histograms[i:i + histograms_per_block_sqrt, j:j + histograms_per_block_sqrt])
-                blocks_count = blocks_count + 1
-                print ""
-        print "---[ Blocks normalized ]---\n"
-    '''
     normalized_blocks = normalize_blocks(histograms)
     if normalized_blocks is not None:
-
         print "---[ Building feature vector... ]---"
         feature_vector = build_feature_vector(normalized_blocks)
         print "---[ Feature vector built ]---\n"
