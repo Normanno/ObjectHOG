@@ -9,16 +9,12 @@ import cv2 as cv
 import numpy as np
 from PIL import Image
 from PIL import ImageTk
-import threading
-import multiprocessing as mp
-import functools as ft
 from image_processing.feature_extraction import feature_extraction
 from image_processing.preprocessing import preprocess
+from image_processing.divide_image import resize_image
 import imutils
-import cv2
 from tkFileDialog import askopenfilename
 
-from image_processing.divide_image import resize_image
 
 class Application(tk.Frame):
 
@@ -45,11 +41,10 @@ class Application(tk.Frame):
         self.right_correction = 0
         self.bottom_correction = 0
         self.left_correction = 0
+
         #Widgets
-        self.camera = None
         self.panel = None
-        self.video_stream = None
-        self.thread = None
+        self.original_image = None
         self.frame = None
         self.options_window = None
         self.sliding_window_options_frame = None
@@ -57,34 +52,37 @@ class Application(tk.Frame):
         self.sliding_window_width_entry = None
         self.sliding_window_horizontal_step_entry = None
         self.sliding_window_vertical_step_entry = None
-        self.stopEvent = threading.Event()
-        self.bottom_video_frame = None
+        self.bottom_label_frame = None
         self.bottom_image_frame = None
+        self.bottom_model_frame = None
+        self.bottom_model_info = None
+        self.model_center = IntVar()
+        self.model_blurred = IntVar()
+        self.classified_label = StringVar()
+        self.selected_model = StringVar()
         #init
         self.init_window()
         #self.calc_sliding_window_corrections()
 
     def init_window(self):
         self.init_menu()
-        #self.init_sliding_window()
+        self.init_sliding_window()
         self.create_widgets()
+        self.panel.grid(row=0, column=0, padx=30, pady=30)
+        self.bottom_label_frame.grid(row=6, column=0)
+        self.bottom_model_frame.grid(row=7, column=0)
+        self.bottom_image_frame.grid(row=8, column=0)
+        self.bottom_model_info.grid(row=9, column=0)
 
     def init_menu(self):
         menu = Menu(self.master)
         self.master.config(menu=menu)
-        file_menu = Menu(menu)
-        file_menu.add_command(label="Exit", command=self.client_exit)
-        menu.add_cascade(label="File", menu=file_menu)
-
-        source_menu = Menu(menu)
-        source_menu.add_command(label="Camera", command=self.init_video_gui)
-        source_menu.add_command(label="Image", command=self.init_image_gui)
-        menu.add_cascade(label="Source", menu=source_menu)
-
-        model_menu = Menu(menu)
-        model_menu.add_command(label="Choose Model", command=self.choose_model_file)
-        model_menu.add_command(label="Sliding window", command=self.display_sliding_window_options)
-        menu.add_cascade(label="Classification", menu=model_menu)
+        #model_menu = Menu(menu)
+        #model_menu.add_command(label="Load Model", command=self.choose_model_file)
+        #model_menu.add_command(label="Sliding window", command=self.display_sliding_window_options)
+        #menu.add_cascade(label="Classification", menu=model_menu)
+        menu.add_command(label="Load Model", command=self.choose_model_file)
+        menu.add_command(label="Exit", command=self.client_exit)
 
     def init_sliding_window(self):
         self.sliding_window_options_frame = Frame(self.master)
@@ -114,29 +112,36 @@ class Application(tk.Frame):
     def create_widgets(self):
         print 'creating widgets'
         self.bottom_image_frame = Frame(self.master)
-        self.bottom_video_frame = Frame(self.master)
+        self.bottom_model_frame = Frame(self.master)
+        self.bottom_model_info = Frame(self.master)
+        self.bottom_label_frame = Frame(self.master)
         self.panel = Label(self.master)
-        self.panel.grid(row=0, column=0, padx=30, pady=30)
-        play_button = Button(self.bottom_video_frame, text="Play", command=self.start_video)
-        play_button.grid(row=0, column=0)
-        stop_button = Button(self.bottom_video_frame, text="Stop", command=self.stop_video)
-        stop_button.grid(row=0, column=1)
-        save_image = Button(self.bottom_video_frame, text="Save Iamge", command=self.save_video_frame)
-        save_image.grid(row=0, column=2)
+
+        label = StringVar()
+        label.set("Classified as : ")
+        label_classified = Label(self.bottom_label_frame, textvariable=self.classified_label, relief=RAISED)
+        label_classified.grid(row=0, column=1)
+        label_label = Label(self.bottom_label_frame, textvariable=label)
+        label_label.grid(row=0, column=0)
+
+        label_l = StringVar()
+        label_l.set("Actual Model: ")
+        label_model = Label(self.bottom_model_info, textvariable=self.selected_model, relief=RAISED)
+        label_model.grid(row=0, column=1)
+        label_label_model = Label(self.bottom_model_info, textvariable=label_l)
+        label_label_model.grid(row=0, column=0)
+
+        check_center = Checkbutton(self.bottom_model_frame, text="Model Center", variable=self.model_center, onvalue=1, offvalue=0, height=2, width=20)
+        check_center.grid(row=0, column=0)
+        check_blurred = Checkbutton(self.bottom_model_frame, text="Model Blur", variable=self.model_blurred,onvalue=1, offvalue=0, height=2, width=20)
+        check_blurred.grid(row=0, column=1)
+
         choose_img_button = Button(self.bottom_image_frame, text="Choose Image", command=self.choose_image)
         choose_img_button.grid(row=0, column=0)
-        classify_image = Button(self.bottom_image_frame, text="Classify", command=self.classify_sliding_window)
-        classify_image.grid(row=0, column=1)
+        #classify_image = Button(self.bottom_image_frame, text="Classify", command=self.classify_all_image)
+        #classify_image.grid(row=0, column=1)
         classify_object_button = Button(self.bottom_image_frame, text="Classify Object", command=self.classify_single_object)
         classify_object_button.grid(row=0, column=2)
-
-    def init_video_stream(self, camera=0):
-        print "init video stream "
-        self.camera = camera
-        if self.video_stream is not None:
-            print "not none"
-            self.stop_video()
-        self.video_stream = cv2.VideoCapture(self.camera)
 
     def update_panel(self, image):
         if self.panel is None:
@@ -148,76 +153,44 @@ class Application(tk.Frame):
             self.panel.image = image
 
     #IMAGE
-    def init_image_gui(self):
-        print "init_image_gui"
-        self.stop_video()
-        self.bottom_video_frame.grid_forget()
-        self.bottom_image_frame.grid(row=5, column=0)
-
     def choose_image(self):
-        print "choose image"
-        self.frame = cv.imread(askopenfilename(filetypes=self.image_file_types))
-        self.frame = imutils.resize(self.frame, width=self.window_width, height=self.window_height)
-        image = cv.cvtColor(self.frame, cv.COLOR_BGR2GRAY)
-        #image = preprocess(self.frame)
-        #image = cv.cvtColor(self.frame, cv.COLOR_BGR2RGB)
-        image = Image.fromarray(image)
-        image = ImageTk.PhotoImage(image)
+        file_path = askopenfilename(filetypes=self.image_file_types)
+        print "file_path "+str(file_path)
+        img = cv.imread(file_path)
+        print "shape "+str(img.shape)
+        if len(img.shape) > 2:
+            img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        self.original_image = img.copy()
+        img_height, img_widht = img.shape
+        if img_height > self.window_height or img_widht > self.window_width:
+            img = imutils.resize(self.original_image, width=self.window_width, height=self.window_height)
+
+        img = Image.fromarray(img)
+        img = ImageTk.PhotoImage(img)
         # if the panel is not None, we need to initialize it
-        self.update_panel(image)
+        self.frame = img
+        self.update_panel(img)
+
+    def classify_all_image(self):
+        self.calc_sliding_window_corrections()
+        if len(self.original_image.shape) > 2:
+            self.original_image = cv.cvtColor(self.original_image, cv.COLOR_BGR2GRAY)
+        if self.actual_view_height < 0 or self.actual_view_width < 0:
+            self.actual_view_height, self.actual_view_width = self.original_image.shape
+            self.calc_sliding_window_corrections()
+        image = imutils.resize(self.original_image, width=self.window_width, height=self.window_height)
+        image = self.classify_sliding_window(self.original_image)
+        self.original_image = image
+        self.update_panel(self.original_image)
 
     def classify_single_object(self):
-        print "select single object"
-
-    #VIDEO
-    def init_video_gui(self):
-        print "init video gui"
-        self.bottom_image_frame.grid_forget()
-        self.bottom_video_frame.grid(row=5, column=0)
-        self.start_video()
-
-    def start_video(self):
-        self.init_video_stream()
-        self.stopEvent.clear()
-        self.thread = threading.Thread(target=self.video_loop, args=())
-        self.thread.start()
-
-    def stop_video(self):
-        self.stopEvent.set()
-
-    def save_video_frame(self):
-        f = tkFileDialog.asksaveasfile(mode='w')
-        if f is None:  # asksaveasfile return `None` if dialog closed with "cancel".
-            return
-        f.close()
-        cv.imwrite(f.name, self.frame)
-
-    def video_loop(self):
-        try:
-            while not self.stopEvent.is_set():
-                ret, self.frame = self.video_stream.read()
-                self.frame = cv.cvtColor(self.frame, cv.COLOR_BGR2GRAY)
-                self.frame = imutils.resize(self.frame, width=self.window_width, height=self.window_height)
-
-                if self.actual_view_height < 0 or self.actual_view_width < 0:
-                    self.actual_view_height, self.actual_view_width = self.frame.shape
-                    self.calc_sliding_window_corrections()
-
-                if self.classifier is not None:
-                    image = self.classify_sliding_window(self.frame)
-                else:
-                    image = preprocess(self.frame)
-                image = cv.flip(image, 1)
-                image = Image.fromarray(image)
-                image = ImageTk.PhotoImage(image)
-                self.frame = image
-                self.update_panel(image)
-        except RuntimeError, e:
-            print("[INFO] caught a RuntimeError")
-
-        if self.video_stream is not None:
-            self.video_stream.release()
-            self.video_stream = None
+        centered = self.model_center.get() == 1
+        blurred = self.model_blurred.get() == 1
+        image = resize_image(self.original_image,centered=centered, blur_outer_borders=blurred)
+        feats = feature_extraction(image)
+        X_data = []
+        X_label = self.classifier.predict(feats.reshape(1, -1))
+        self.classified_label.set(self.classes_dict[int(X_label[0])])
 
     #MODEL
     def choose_model_file(self):
@@ -227,6 +200,7 @@ class Application(tk.Frame):
         print "Chosen classes path : "+self.actual_classes_file
         self.classifier = joblib.load(self.actual_model_path)
         self.classes_dict.clear()
+        self.selected_model.set(self.actual_model_path)
         with open(self.actual_classes_file, "r") as cf:
             for line in cf:
                 fields = line.replace("\n", "").split("\t")
@@ -252,46 +226,55 @@ class Application(tk.Frame):
         self.left_correction = left_correction
 
     def classify_sliding_window(self, image):
-        top_y = lambda x: (x*self.sliding_window_horizontal_step) + self.right_correction
-        bottom_y = lambda x: (top_y(x) + self.sliding_window_width)
-        top_x = lambda x: (x * self.sliding_window_vertical_step) + self.top_correction
-        bottom_x = lambda x: (top_x(x) + self.sliding_window_width)
+        left_x = lambda x: (x * self.sliding_window_vertical_step) + self.top_correction
+        right_x = lambda x: left_x(x) + self.sliding_window_height
+        top_y = lambda y: (y * self.sliding_window_horizontal_step) + self.left_correction
+        bottom_y = lambda y: top_y(y) + self.sliding_window_width
+
         num_columns = ((self.actual_view_width - self.left_correction - self.right_correction - self.sliding_window_width)
                        / self.sliding_window_horizontal_step) + 1
         num_rows = ((self.actual_view_height - self.top_correction - self.bottom_correction - self.sliding_window_height)
                     / self.sliding_window_vertical_step) + 1
-        result = np.ndarray(shape=(num_rows, num_columns), dtype=int)
-        result.fill(-1)
+        self.total_of_patches = num_rows * num_columns
+
+        print "rows : "+str(num_rows)
+        print "cols : "+str(num_columns)
+        print "classification"
+        X_data = []
         for i in range(0, num_rows):
             for j in range(0, num_columns):
                 try:
-                    self.classify(i, j, image, result)
-                except ValueError:
+                    sub_img = image[left_x(i):right_x(i), top_y(j):bottom_y(j)]
+                    feats = feature_extraction(sub_img)
+                    #process_pool.apply_async(ft.partial(classify, i, j, sub_img, self.classifier), callback=update_classification_results)
+                    X_data.append(feats)
+
+                except Exception, ValueError:
                     print " Value error "+str(i)+" - "+str(j)
-        image = cv.rectangle(image, (0, 0), (self.sliding_window_width, self.sliding_window_height), (0, 0, 255), 2)
-        for i in range(0, num_rows):
-            for j in range(0, num_columns):
-                res = int(result[i][j])
-                if res != -1 and str(self.classes_dict[res]).lower() != 'none':
-                    image = cv.rectangle(image, (top_y(j), top_x(i)), (bottom_y(j), bottom_x(i)), (0, 0, 255), 2)
-                    #todo smaller image text
-                    image = cv.putText(image, self.classes_dict[res], (top_y(j)+2, top_x(i)+2),
-                                             4, 1.0, (255, 255, 255), 2, cv.LINE_AA)
+
+        X_labels = self.classifier.predict(X_data)
+        X_probs = self.classifier.predict_proba(X_data)
+
+        image = self.draw_classification(image, X_probs, num_rows, num_columns)
+
         return image
 
-    def classify(self, i, j, image, result_mat):
-        left_x = (i * self.sliding_window_vertical_step) + self.top_correction
-        right_x = left_x + self.sliding_window_height
-        top_y = (j * self.sliding_window_horizontal_step) + self.left_correction
-        bottom_y = top_y + self.sliding_window_width
-        sub_img = image[left_x:right_x, top_y:bottom_y]
+    def draw_classification(self, image, results, num_rows, num_columns):
+        top_y = lambda x: (x * self.sliding_window_horizontal_step) + self.right_correction
+        bottom_y = lambda x: (top_y(x) + self.sliding_window_width)
+        top_x = lambda x: (x * self.sliding_window_vertical_step) + self.top_correction
+        bottom_x = lambda x: (top_x(x) + self.sliding_window_width)
 
-        #todo Allow bigger area to be resized to model dimensions
-
-        feats = feature_extraction(sub_img)
-
-        res = self.classifier.predict(feats.reshape([1, -1]))
-        result_mat[i][j] = res
+        for i in range(0, num_rows):
+            for j in range(0, num_columns):
+                if len(results) > 0:
+                    probs = results[i+j]
+                    res = probs[probs.argmax(axis=0)]
+                    if res > 0.5 and str(self.classes_dict[res]).lower() != 'none':
+                        image = cv.rectangle(image, (top_y(j), top_x(i)), (bottom_y(j), bottom_x(i)), (0, 0, 255), 2)
+                        image = cv.putText(image, self.classes_dict[res], (top_y(j)+2, top_x(i)+2),
+                                                 4, 0.3, (255, 255, 255), 1, cv.LINE_AA)
+        return image
 
     def save_sliding_window_values(self):
         sw_h = 0

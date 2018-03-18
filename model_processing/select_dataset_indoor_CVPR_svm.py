@@ -191,7 +191,7 @@ def select(src_dir, conf_dir, classes_file):
     print "---[Balancing selected dataset]---"
     classes_to_balance = classes_dict.keys()
     classes_to_balance.remove('none')
-    classes_dict, classes_counts = balance_classes(classes_to_balance ,classes_dict, classes_counts)
+    classes_dict, classes_counts = balance_classes(classes_to_balance, classes_dict, classes_counts)
     print "---[Balancing Done!]---"
 
     if 'none' in classes_list:
