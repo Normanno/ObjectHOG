@@ -10,7 +10,6 @@ import numpy as np
 from PIL import Image
 from PIL import ImageTk
 from image_processing.feature_extraction import feature_extraction
-from image_processing.preprocessing import preprocess
 from image_processing.divide_image import resize_image
 import imutils
 from tkFileDialog import askopenfilename
@@ -126,7 +125,7 @@ class Application(tk.Frame):
 
         label_l = StringVar()
         label_l.set("Actual Model: ")
-        label_model = Label(self.bottom_model_info, textvariable=self.selected_model, relief=RAISED)
+        label_model = Label(self.bottom_model_info, textvariable=self.selected_model, relief=FLAT)
         label_model.grid(row=0, column=1)
         label_label_model = Label(self.bottom_model_info, textvariable=label_l)
         label_label_model.grid(row=0, column=0)
@@ -186,11 +185,12 @@ class Application(tk.Frame):
     def classify_single_object(self):
         centered = self.model_center.get() == 1
         blurred = self.model_blurred.get() == 1
-        image = resize_image(self.original_image,centered=centered, blur_outer_borders=blurred)
+        image = resize_image(self.original_image, centered=centered, blur_outer_borders=blurred)
         feats = feature_extraction(image)
         X_data = []
         X_label = self.classifier.predict(feats.reshape(1, -1))
         self.classified_label.set(self.classes_dict[int(X_label[0])])
+        print "classified as " + self.classes_dict[int(X_label[0])]
 
     #MODEL
     def choose_model_file(self):
@@ -200,7 +200,8 @@ class Application(tk.Frame):
         print "Chosen classes path : "+self.actual_classes_file
         self.classifier = joblib.load(self.actual_model_path)
         self.classes_dict.clear()
-        self.selected_model.set(self.actual_model_path)
+        m_path = self.actual_model_path.rsplit("/", 1)[0]
+        self.selected_model.set("..."+m_path[len(m_path)-30:])
         with open(self.actual_classes_file, "r") as cf:
             for line in cf:
                 fields = line.replace("\n", "").split("\t")
