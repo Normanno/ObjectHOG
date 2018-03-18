@@ -28,10 +28,11 @@ def automatic_gamma_correction_gray(src):
     return res
 
 
-def preprocess(img):
+def preprocess(img, gamma):
     if len(img.shape) > 2:
         img = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
-    img = automatic_gamma_correction_gray(img)
+    if gamma:
+        img = automatic_gamma_correction_gray(img)
     return img
 
 if __name__ == "__main__":

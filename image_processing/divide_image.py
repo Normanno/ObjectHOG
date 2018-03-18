@@ -22,21 +22,35 @@ def calc_new_shape(height, width, model_width=64, model_height=128, stamp=False)
     return new_height, new_width
 
 
-def resize_image(image, model_width=64, model_height=128):
+def resize_image(image, model_width=64, model_height=128, centered=True, blur_outer_borders=False):
     height, width = image.shape
     new_height, new_width = calc_new_shape(height, width, model_width, model_height)
     resized_image = cv.resize(image, (new_width, new_height))
-    v_correction = 0
-    h_correction = 0
-    if (model_height - new_height) % 2 == 1:
-        v_correction = 1
-    if (model_width - new_width) % 2 == 1:
-        h_correction = 1
-    top_border = (model_height - new_height) / 2
-    right_border = ((model_width - new_width) / 2) + h_correction
-    bottom_border = ((model_height - new_height) / 2) + v_correction
-    left_border = (model_width - new_width) / 2
-    final_image = cv.copyMakeBorder(resized_image, top_border, bottom_border, left_border, right_border, cv.BORDER_CONSTANT)
+    top_border = 0
+    bottom_border = model_height - new_height
+    left_border = 0
+    right_border = model_width - new_width
+
+    if centered:
+        v_correction = 0
+        h_correction = 0
+        if (model_height - new_height) % 2 == 1:
+            v_correction = 1
+        if (model_width - new_width) % 2 == 1:
+            h_correction = 1
+        top_border = (model_height - new_height) / 2
+        right_border = ((model_width - new_width) / 2) + h_correction
+        bottom_border = ((model_height - new_height) / 2) + v_correction
+        left_border = (model_width - new_width) / 2
+
+    if blur_outer_borders:
+        final_image = cv.copyMakeBorder(resized_image, top_border, bottom_border, left_border, right_border,
+                                        cv.BORDER_REFLECT_101)
+        final_image = cv.blur(final_image, (16, 16))
+        final_image[top_border:new_height+top_border, left_border:new_width+left_border] = resized_image
+    else:
+        final_image = cv.copyMakeBorder(resized_image, top_border, bottom_border, left_border, right_border,
+                                    cv.BORDER_CONSTANT)
     return final_image
 
 if __name__ == "__main__":

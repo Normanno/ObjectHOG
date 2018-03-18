@@ -59,16 +59,17 @@ def build_feature_vector(normalized_blocks, stamp=False):
     return feature_vector
 
 
-def feature_extraction(image, unsigned=True, stamp=False):
+def feature_extraction(image, unsigned=True, stamp=False, gamma=True):
     """
     >feature_extraction(image)
     this function extracts the feature from the nd
     :param image: float32 ndarray representing the Region Of Interest (ROI)
     :param unsigned: boolean indicate if the bins are signed(False) or unsigned(True), Default is True
+    :param stamp: if True the scripts will display all the run-info (Default=False)
     :return: array of features
     """
     feature_vector = None
-    image = preprocess(image)
+    image = preprocess(image, gamma)
     image = np.float32(image) / 255.0
     magnitude, angle = calc_gradient(image, stamp=stamp)
     histograms = calc_histograms(image, magnitude, angle, unsigned, stamp=stamp)
