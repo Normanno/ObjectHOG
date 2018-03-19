@@ -22,8 +22,8 @@ class Application(tk.Frame):
         #self.grid()
         self.model_file_types = [("Pickle files", "*.pkl")]
         self.image_file_types = [("Jpeg", "*.jpg"), ("PNG", "*.png")]
-        self.window_width = 640
-        self.window_height = 512
+        self.window_width = 480
+        self.window_height = 640
         self.actual_model_path = ''
         self.actual_classes_file = ''
         self.classes_dict = dict()
@@ -55,6 +55,7 @@ class Application(tk.Frame):
         self.bottom_image_frame = None
         self.bottom_model_frame = None
         self.bottom_model_info = None
+        self.options_panel = None
         self.model_center = IntVar()
         self.model_blurred = IntVar()
         self.classified_label = StringVar()
@@ -67,7 +68,7 @@ class Application(tk.Frame):
         self.init_menu()
         self.init_sliding_window()
         self.create_widgets()
-        self.panel.grid(row=0, column=0, padx=30, pady=30)
+        self.panel.grid(row=0, column=0, padx=20, pady=10)
         self.bottom_label_frame.grid(row=6, column=0)
         self.bottom_model_frame.grid(row=7, column=0)
         self.bottom_image_frame.grid(row=8, column=0)
@@ -146,7 +147,7 @@ class Application(tk.Frame):
         if self.panel is None:
             self.panel = tk.Label(self.master)
             self.panel.image = image
-            self.panel.grid(row=0, column=0, padx=30, pady=30)
+            self.panel.grid(row=0, column=0, padx=20, pady=20)
         else:
             self.panel.configure(image=image)
             self.panel.image = image
@@ -161,9 +162,11 @@ class Application(tk.Frame):
             img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         self.original_image = img.copy()
         img_height, img_widht = img.shape
-        if img_height > self.window_height or img_widht > self.window_width:
-            img = imutils.resize(self.original_image, width=self.window_width, height=self.window_height)
-
+        if img_height > self.window_height:
+            img = imutils.resize(img, height=self.window_height)
+        #if img_widht > self.window_width:
+        #    img = imutils.resize(img, width=self.window_width)
+        print "img "+str(img.shape)
         img = Image.fromarray(img)
         img = ImageTk.PhotoImage(img)
         # if the panel is not None, we need to initialize it
@@ -363,6 +366,6 @@ class Application(tk.Frame):
 if __name__ == '__main__':
     print "starting object hog gui"
     root = Tk()
-    root.geometry("700x500")
+    root.geometry("600x900")
     app = Application(root)
     app.mainloop()

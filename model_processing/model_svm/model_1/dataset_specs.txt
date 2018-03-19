@@ -1,2 +1,0 @@
-dataset_name    images
-dataset_root_dir    /the/absolute/dataset/path
